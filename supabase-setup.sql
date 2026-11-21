@@ -40,3 +40,10 @@ create policy "Users view own unlocks" on public.video_unlocks for select using 
 create policy "Users insert own unlocks" on public.video_unlocks for insert with check (auth.uid()=user_id);
 drop policy if exists "Admins read own admin row" on public.admins;
 create policy "Admins read own admin row" on public.admins for select using (auth.uid()=user_id);
+
+-- Required SQL privileges (RLS policies above still control row access)
+grant usage on schema public to anon, authenticated;
+grant select on public.videos to anon, authenticated;
+grant insert, update, delete on public.videos to authenticated;
+grant select, insert on public.video_unlocks to authenticated;
+grant select on public.admins to authenticated;
