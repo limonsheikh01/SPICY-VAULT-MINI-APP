@@ -63,7 +63,8 @@ async function uploadAsset(kind){
  const isVideo=kind==='video', input=$(isVideo?'videoFile':'posterFile'), file=input.files[0];
  if(!file){status('আগে একটি '+(isVideo?'video':'poster image')+' file নির্বাচন করো।');return false}
  if(isVideo && file.size>50*1024*1024){status('Free setup limit: video file must be 50 MB or smaller.');return false}
- const ext=file.name.split('.').pop().toLowerCase();\n const allowedType=['video/mp4','video/webm','video/quicktime'].includes(file.type)||['mp4','webm','mov'].includes(ext);\n if(isVideo && !allowedType){status('MP4, WebM অথবা MOV ভিডিও নির্বাচন করো।');return false}
+ const ext=file.name.split('.').pop().toLowerCase();
+ const allowedType=['video/mp4','video/webm','video/quicktime'].includes(file.type)||['mp4','webm','mov'].includes(ext);\n if(isVideo && !allowedType){status('MP4, WebM অথবা MOV ভিডিও নির্বাচন করো।');return false}
  const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
  const path=(isVideo?'videos/':'posters/')+Date.now()+'-'+safeName;
  status('Uploading '+(isVideo?'video':'poster')+'… please wait.');
@@ -71,7 +72,8 @@ async function uploadAsset(kind){
  if(error){status('Upload failed: '+error.message+' — check Storage SQL setup and file size.');return false}
  const {data}=sb.storage.from('vault-videos').getPublicUrl(path);
  if(isVideo){uploadedVideoUrl=data.publicUrl;$('videoUrl').value=data.publicUrl}else{uploadedPosterUrl=data.publicUrl;$('poster').value=data.publicUrl}
- status((isVideo?'Video':'Poster')+' uploaded successfully.');\n return true;
+ status((isVideo?'Video':'Poster')+' uploaded successfully.');
+ return true;
 }
 $('uploadVideo').onclick=()=>uploadAsset('video');
 $('uploadPoster').onclick=()=>uploadAsset('poster');
