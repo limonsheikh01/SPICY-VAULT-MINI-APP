@@ -19,7 +19,7 @@ main{max-width:760px;margin:auto;padding:0 16px}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.video-card{background:var(--panel);border:1px solid #24242a;border-radius:16px;overflow:hidden;cursor:pointer}.poster{aspect-ratio:3/4;background-size:cover;background-position:center;position:relative;overflow:hidden}.poster-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}.poster-missing{background:linear-gradient(145deg,#292936,#101016)}.poster:after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.75),transparent 65%)}.tag{position:absolute;top:10px;left:10px;z-index:1;background:rgba(230,55,72,.95);font-size:10px;font-weight:800;padding:5px 7px;border-radius:6px}.lock{position:absolute;right:10px;top:10px;z-index:1;background:rgba(0,0,0,.62);border-radius:50%;width:28px;height:28px;display:grid;place-items:center}.poster-title{position:absolute;bottom:12px;left:12px;right:12px;z-index:1;font-size:16px;font-weight:800;line-height:1.1}.card-info{padding:11px 12px 13px}.card-info p{margin:0;color:var(--muted);font-size:11px}.card-info strong{display:block;font-size:12px;margin-bottom:5px}
 .wide-card{margin-top:16px;background:linear-gradient(120deg,#201216,#151519);border:1px solid #332126;border-radius:16px;padding:15px;display:flex;gap:12px;align-items:center}.wide-icon{font-size:27px}.wide-card strong{display:block;font-size:14px;margin-bottom:4px}.wide-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.45}
 .bottom{position:fixed;bottom:0;left:0;right:0;background:rgba(12,12,14,.96);border-top:1px solid #25252a;display:flex;justify-content:space-around;padding:12px 10px calc(12px + env(safe-area-inset-bottom));z-index:10}.navitem{font-size:11px;color:#888;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:0}.navitem.active{color:#ff5968;font-weight:700}.navitem span:first-child{font-size:19px}
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:20;align-items:center;justify-content:center;padding:18px}.modal{background:#19191e;border:1px solid #34343b;border-radius:18px;padding:20px;max-width:520px;width:100%;max-height:90vh;overflow:auto}.modal h3{margin:0 0 10px}.modal p{color:#c4c4cb;line-height:1.5;font-size:14px}.close{background:#303038;color:white;border:0;border-radius:9px;padding:10px 15px;margin-top:12px}.player{width:100%;display:block;border-radius:12px;background:#000;max-height:60vh}.empty{display:none;color:#aaa;font-size:13px;padding:18px;text-align:center}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:20;align-items:center;justify-content:center;padding:18px}.modal{background:#19191e;border:1px solid #34343b;border-radius:18px;padding:20px;max-width:520px;width:100%;max-height:90vh;overflow:auto}.modal h3{margin:0 0 10px}.modal p{color:#c4c4cb;line-height:1.5;font-size:14px}.close{background:#303038;color:white;border:0;border-radius:9px;padding:10px 15px;margin-top:12px}.player{width:100%;display:block;border-radius:12px;background:#000;max-height:60vh}.player-wrap{position:relative;width:100%}.player-wrap:fullscreen{background:#000;display:grid;place-items:center}.player-wrap:fullscreen .player{width:100%;height:100%;max-height:100vh;object-fit:contain}.fullscreen-btn{position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.72);color:#fff;border:1px solid #777;border-radius:8px;padding:9px 12px;font-size:14px;z-index:2}.empty{display:none;color:#aaa;font-size:13px;padding:18px;text-align:center}
 </style>
 </head>
 <body>
@@ -52,7 +52,26 @@ function openModal(title,body){document.getElementById('modalTitle').textContent
 function hideModal(){document.getElementById('overlay').style.display='none';const v=document.querySelector('#modalBody video');if(v)v.pause()}
 function closeModal(e){if(e.target.id==='overlay')hideModal()}
 function lockedVideo(title){openModal(title,'<p>This video is locked. The 3-ad unlock and real video access are still being built; no ads are being counted yet.</p>')}
-function playPreview(){openModal('Flower Preview','<p>Demo clip only — this is not a vault video.</p><video class="player" controls playsinline src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"></video>')}
+function playPreview(){showVideoPlayer('Flower Preview','https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4','Demo clip only — this is not a vault video.')}
+function showVideoPlayer(title,url,note=''){
+ openModal(title,'');
+ const body=document.getElementById('modalBody');
+ if(note){const p=document.createElement('p');p.textContent=note;body.append(p)}
+ const wrap=document.createElement('div');wrap.className='player-wrap';
+ const video=document.createElement('video');video.className='player';video.controls=true;video.playsInline=true;video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');video.src=url;
+ const full=document.createElement('button');full.className='fullscreen-btn';full.type='button';full.textContent='⛶ Fullscreen';
+ full.addEventListener('click',async()=>{
+  try{
+   if(typeof video.webkitEnterFullscreen==='function' && /iPhone|iPad|iPod/i.test(navigator.userAgent)){video.webkitEnterFullscreen();return}
+   if(document.fullscreenElement){await document.exitFullscreen();return}
+   if(video.requestFullscreen){await video.requestFullscreen();}
+   else if(wrap.requestFullscreen){await wrap.requestFullscreen();}
+   else if(typeof video.webkitEnterFullscreen==='function'){video.webkitEnterFullscreen();}
+   else{full.textContent='Fullscreen not supported';}
+  }catch(e){full.textContent='Tap video controls for fullscreen';}
+ });
+ wrap.append(video,full);body.append(wrap);
+}
 function navInfo(label){document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));event.currentTarget.classList.add('active');if(label==='Home'){document.getElementById('home').scrollIntoView({behavior:'smooth'});return}openModal(label,label==='Categories'?'Use the category chips above to filter videos.':label==='Unlocked'?'No videos have been unlocked yet.':'Profile settings will be added in a later step.')}
 
 // Supabase public catalog connection. Only published catalog entries are fetched.
@@ -92,7 +111,7 @@ async function loadPublishedVideos(){
 }
 function playRemoteVideo(title,url){
  if(!url){lockedVideo(title);return}
- openModal(title,'<video class="player" controls playsinline src="'+url.replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'"></video>');
+ showVideoPlayer(title,url);
 }
 loadPublishedVideos();
 
