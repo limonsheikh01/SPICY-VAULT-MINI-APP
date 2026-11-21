@@ -1,40 +1,42 @@
 <!doctype html>
-<html lang="bn">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SPICY VAULT — Admin Studio</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SPICY VAULT Admin</title>
 <style>
-:root{--bg:#09090b;--panel:#151519;--line:#29292f;--text:#f4f4f6;--muted:#9999a3;--accent:#e63748}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,sans-serif;padding:22px 16px 50px}
-main{max-width:880px;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:26px}.brand{font-weight:900;letter-spacing:1.5px}.brand span{color:var(--accent)}.sub{color:var(--muted);font-size:13px;margin-top:5px}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:18px}h2{font-size:18px;margin:0 0 15px}
-.notice{background:#242024;border:1px solid #49343a;border-radius:12px;padding:12px;color:#d6bfc2;font-size:13px;line-height:1.5;margin-bottom:18px}
-label{display:block;font-size:13px;color:#bdbdc6;margin:12px 0 6px}input,select{width:100%;border:1px solid var(--line);border-radius:10px;background:#0e0e12;color:white;padding:12px;font:inherit;outline:none}input:focus,select:focus{border-color:#b52c3a}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.btn{border:0;border-radius:10px;padding:12px 16px;font-weight:700;cursor:pointer}.primary{background:var(--accent);color:white}.secondary{background:#29292f;color:white;border:1px solid #38383f}.danger{background:#3b2226;color:#ffc5cb}.actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
-.list{display:grid;gap:10px}.item{border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;gap:12px;align-items:center}.thumb{width:82px;height:58px;object-fit:cover;border-radius:8px;background:#24242a}.info{flex:1;min-width:0}.info strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.meta{font-size:12px;color:var(--muted);margin-top:4px}.item-actions{display:flex;gap:6px}.item-actions button{padding:8px 10px;font-size:12px}.empty{color:var(--muted);padding:14px;text-align:center}
-@media(max-width:580px){.grid{grid-template-columns:1fr}.item{align-items:flex-start}.thumb{width:70px;height:54px}.item-actions{flex-direction:column}.top{align-items:flex-start;flex-direction:column}}
-</style>
-</head>
-<body><main>
-<header class="top"><div><div class="brand">SPICY <span>VAULT</span> / ADMIN</div><div class="sub">Video catalog studio</div></div><a href="./" style="color:#ccc;text-decoration:none">← Back to app</a></header>
-<div class="notice"><b>Prototype only:</b> Ei panel-e video list sudhu ei browser-er local storage-e save hoy. Ekhono public catalog-e add hoy na, secure admin login o nei. Real admin/database connect korar age eta test panel.</div>
-<section class="panel"><h2 id="formHeading">Add a video</h2><form id="videoForm">
-<div class="grid"><div><label>Video title *</label><input id="title" required placeholder="Video title"></div><div><label>Category</label><select id="category"><option>Trending</option><option>New</option><option>Popular</option><option>Other</option></select></div></div>
-<label>Poster image URL</label><input id="poster" type="url" placeholder="https://... (poster image link)">
-<label>Video URL *</label><input id="video" type="url" required placeholder="https://... (video link)">
-<div class="actions"><button class="btn primary" type="submit" id="saveBtn">Save video</button><button class="btn secondary" type="button" id="cancelBtn" hidden>Cancel edit</button></div>
-</form></section>
-<section class="panel"><h2>Saved videos <span id="count" class="sub" style="display:inline"></span></h2><div class="list" id="list"></div></section>
-</main>
+*{box-sizing:border-box}body{margin:0;background:#0b0b10;color:#eee;font-family:system-ui;padding:20px}main{max-width:800px;margin:auto}h1{color:#e8a44a}section,.video{background:#171720;border:1px solid #30303b;border-radius:12px;padding:16px;margin:12px 0}input,select,button{width:100%;margin:7px 0;padding:12px;border-radius:8px;border:1px solid #3b3b45;background:#101016;color:white}button{background:#c27b25;border:0;font-weight:bold;cursor:pointer}.secondary{background:#353540}.status{color:#f1bf73;white-space:pre-wrap}.video{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.video img{width:100px;aspect-ratio:16/9;object-fit:cover;border-radius:7px}.video .meta{flex:1;min-width:180px}.video button{width:auto;padding:9px 12px}.hidden{display:none}
+</style></head><body><main><h1>SPICY VAULT Admin</h1>
+<p class="status" id="status">Loading Supabase connection…</p>
+<section id="auth"><h2>Admin sign in / sign up</h2><input id="email" type="email" placeholder="Email"><input id="password" type="password" placeholder="Password"><button id="login">Login</button><button class="secondary" id="signup">Create account</button><button class="secondary hidden" id="logout">Logout</button><p class="status" id="userInfo"></p></section>
+<section id="editor" class="hidden"><h2>Add or edit video</h2><input id="title" placeholder="Video title"><input id="category" placeholder="Category (Trending/New/Popular)"><input id="poster" placeholder="Poster image URL (optional)"><input id="videoUrl" placeholder="Video URL"><label><input id="published" type="checkbox" style="width:auto"> Published (show in Mini App)</label><button id="save">Save video</button><button class="secondary" id="clear">Clear form</button><input id="editId" type="hidden"></section>
+<section id="catalog" class="hidden"><h2>Database videos</h2><div id="list"></div></section></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const KEY='spicyVaultAdminDemoVideos';
-const form=document.getElementById('videoForm'), title=document.getElementById('title'), category=document.getElementById('category'), poster=document.getElementById('poster'), video=document.getElementById('video'), list=document.getElementById('list'), count=document.getElementById('count');
-let data=JSON.parse(localStorage.getItem(KEY)||'[]'), editing=null;
-function save(){localStorage.setItem(KEY,JSON.stringify(data));render()}
-function render(){count.textContent='('+data.length+')';list.innerHTML='';if(!data.length){list.innerHTML='<div class="empty">Ekhono kono video save kora hoyni.</div>';return}
-data.forEach((v,i)=>{const row=document.createElement('div');row.className='item';const img=document.createElement('img');img.className='thumb';img.src=v.poster||'';img.alt='';img.onerror=()=>{img.style.visibility='hidden'};const info=document.createElement('div');info.className='info';const strong=document.createElement('strong');strong.textContent=v.title;const meta=document.createElement('div');meta.className='meta';meta.textContent=v.category;info.append(strong,meta);const actions=document.createElement('div');actions.className='item-actions';const edit=document.createElement('button');edit.className='btn secondary';edit.textContent='Edit';edit.onclick=()=>startEdit(i);const del=document.createElement('button');del.className='btn danger';del.textContent='Delete';del.onclick=()=>{if(confirm('Ei video delete korben?')){data.splice(i,1);save();if(editing===i)reset()}};actions.append(edit,del);row.append(img,info,actions);list.append(row)})}
-form.onsubmit=e=>{e.preventDefault();const item={title:title.value.trim(),category:category.value,poster:poster.value.trim(),video:video.value.trim()};if(editing!==null)data[editing]=item;else data.unshift(item);save();reset()};
-function startEdit(i){editing=i;const v=data[i];title.value=v.title;category.value=v.category;poster.value=v.poster;video.value=v.video;document.getElementById('formHeading').textContent='Edit video';document.getElementById('saveBtn').textContent='Update video';document.getElementById('cancelBtn').hidden=false;window.scrollTo({top:0,behavior:'smooth'})}
-function reset(){editing=null;form.reset();document.getElementById('formHeading').textContent='Add a video';document.getElementById('saveBtn').textContent='Save video';document.getElementById('cancelBtn').hidden=true}
-document.getElementById('cancelBtn').onclick=reset;render();
+const SUPABASE_URL='https://bqienkfpdwhemomqnorx.supabase.co';
+const SUPABASE_KEY='sb_publishable_9qZNVH5FUXW3iPsx2PVQjQ_fealhswM';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id); let currentAdmin=false;
+function status(t){$('status').textContent=t}
+function clearForm(){['title','category','poster','videoUrl','editId'].forEach(x=>$(x).value='');$('published').checked=false}
+async function checkAdmin(){
+ const {data:{user}}=await sb.auth.getUser(); currentAdmin=false;
+ $('logout').classList.toggle('hidden',!user);
+ $('userInfo').textContent=user?'Signed in. User UUID: '+user.id+'\nAdmin role must be granted manually in Supabase SQL.':'';
+ $('editor').classList.add('hidden');$('catalog').classList.add('hidden');
+ if(!user){status('Not signed in.');return}
+ const {data,error}=await sb.from('admins').select('user_id').eq('user_id',user.id).maybeSingle();
+ if(error){status('Database check error: '+error.message+' — run supabase-setup.sql in Supabase SQL Editor first.');return}
+ if(!data){status('Login works, but this account is not an admin yet. Copy the UUID shown above and grant admin role in Supabase SQL.');return}
+ currentAdmin=true;status('Admin access confirmed.');$('editor').classList.remove('hidden');$('catalog').classList.remove('hidden');await loadVideos()
+}
+async function loadVideos(){
+ const {data,error}=await sb.from('videos').select('*').order('created_at',{ascending:false});
+ if(error){$('list').textContent=error.message;return}
+ $('list').innerHTML='';
+ (data||[]).forEach(v=>{const el=document.createElement('div');el.className='video';const img=document.createElement('img');img.src=v.poster_url||'';img.alt='poster';const meta=document.createElement('div');meta.className='meta';meta.textContent=v.title+' · '+v.category+' · '+(v.published?'Published':'Draft');const edit=document.createElement('button');edit.textContent='Edit';edit.onclick=()=>{ $('title').value=v.title;$('category').value=v.category;$('poster').value=v.poster_url||'';$('videoUrl').value=v.video_url;$('published').checked=v.published;$('editId').value=v.id;window.scrollTo({top:0,behavior:'smooth'})};const del=document.createElement('button');del.className='secondary';del.textContent='Delete';del.onclick=async()=>{if(!confirm('Delete this video?'))return;const {error}=await sb.from('videos').delete().eq('id',v.id);if(error)alert(error.message);else loadVideos()};el.append(img,meta,edit,del);$('list').append(el)})
+}
+$('login').onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$('email').value,password:$('password').value});if(error)status(error.message);else checkAdmin()};
+$('signup').onclick=async()=>{const {error,data}=await sb.auth.signUp({email:$('email').value,password:$('password').value});if(error)status(error.message);else status(data.user?'Account created. If email confirmation is enabled, confirm email then login.':'Check email for confirmation.')};
+$('logout').onclick=async()=>{await sb.auth.signOut();checkAdmin()};
+$('save').onclick=async()=>{if(!currentAdmin)return;const payload={title:$('title').value.trim(),category:$('category').value.trim()||'New',poster_url:$('poster').value.trim()||null,video_url:$('videoUrl').value.trim(),published:$('published').checked};if(!payload.title||!payload.video_url){status('Title and video URL are required.');return}let q=$('editId').value?sb.from('videos').update(payload).eq('id',$('editId').value):sb.from('videos').insert(payload);const {error}=await q;if(error)status(error.message);else{status('Saved!');clearForm();loadVideos()}};
+$('clear').onclick=clearForm;
+sb.auth.onAuthStateChange(()=>setTimeout(checkAdmin,0));
+checkAdmin();
 </script></body></html>
