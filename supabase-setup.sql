@@ -47,3 +47,39 @@ grant select on public.videos to anon, authenticated;
 grant insert, update, delete on public.videos to authenticated;
 grant select, insert on public.video_unlocks to authenticated;
 grant select on public.admins to authenticated;
+
+
+-- Public media bucket for uploaded videos and poster images (50 MB per file)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'vault-videos',
+  'vault-videos',
+  true,
+  52428800,
+  array['video/mp4','video/webm','video/quicktime','image/jpeg','image/png','image/webp']
+)
+on conflict (id) do update
+set public = true,
+    file_size_limit = 52428800,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Public can view SPICY VAULT media" on storage.objects;
+create policy "Public can view SPICY VAULT media"
+on storage.objects for select
+using (bucket_id = 'vault-videos');
+
+drop policy if exists "SPICY admins upload media" on storage.objects;
+create policy "SPICY admins upload media"
+on storage.objects for insert to authenticated
+with check (bucket_id = 'vault-videos' and public.is_spicy_admin());
+
+drop policy if exists "SPICY admins update media" on storage.objects;
+create policy "SPICY admins update media"
+on storage.objects for update to authenticated
+using (bucket_id = 'vault-videos' and public.is_spicy_admin())
+with check (bucket_id = 'vault-videos' and public.is_spicy_admin());
+
+drop policy if exists "SPICY admins delete media" on storage.objects;
+create policy "SPICY admins delete media"
+on storage.objects for delete to authenticated
+using (bucket_id = 'vault-videos' and public.is_spicy_admin());
