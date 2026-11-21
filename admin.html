@@ -6,7 +6,7 @@
 <p class="status" id="status">Loading Supabase connection…</p>
 <section id="auth"><h2>Admin sign in / sign up</h2><input id="email" type="email" placeholder="Email"><input id="password" type="password" placeholder="Password"><button id="login">Login</button><button class="secondary" id="signup">Create account</button><button class="secondary hidden" id="logout">Logout</button><p class="status" id="userInfo"></p></section>
 <section id="editor" class="hidden"><h2>Add or edit video</h2><input id="title" placeholder="Video title"><input id="category" placeholder="Category (Trending/New/Popular)"><input id="poster" placeholder="Poster image URL (optional)"><input id="videoUrl" placeholder="Video URL"><label><input id="published" type="checkbox" style="width:auto"> Published (show in Mini App)</label><button id="save">Save video</button><button class="secondary" id="clear">Clear form</button><input id="editId" type="hidden"></section>
-<section id="catalog" class="hidden"><h2>Database videos</h2><div id="list"></div></section></main>
+<section id="catalog" class="hidden"><h2>Database videos</h2><button class="secondary" id="adminLogout">Logout</button><div id="list"></div></section></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL='https://bqienkfpdwhemomqnorx.supabase.co';
@@ -19,12 +19,12 @@ async function checkAdmin(){
  const {data:{user}}=await sb.auth.getUser(); currentAdmin=false;
  $('logout').classList.toggle('hidden',!user);
  $('userInfo').textContent=user?'Signed in. User UUID: '+user.id+'\nAdmin role must be granted manually in Supabase SQL.':'';
- $('editor').classList.add('hidden');$('catalog').classList.add('hidden');
+ $('editor').classList.add('hidden');$('catalog').classList.add('hidden');$('auth').classList.remove('hidden');
  if(!user){status('Not signed in.');return}
  const {data,error}=await sb.from('admins').select('user_id').eq('user_id',user.id).maybeSingle();
  if(error){status('Database check error: '+error.message+' — run supabase-setup.sql in Supabase SQL Editor first.');return}
  if(!data){status('Login works, but this account is not an admin yet. Copy the UUID shown above and grant admin role in Supabase SQL.');return}
- currentAdmin=true;status('Admin access confirmed.');$('editor').classList.remove('hidden');$('catalog').classList.remove('hidden');await loadVideos()
+ currentAdmin=true;status('Admin access confirmed.');$('auth').classList.add('hidden');$('editor').classList.remove('hidden');$('catalog').classList.remove('hidden');await loadVideos()
 }
 async function loadVideos(){
  const {data,error}=await sb.from('videos').select('*').order('created_at',{ascending:false});
@@ -34,7 +34,7 @@ async function loadVideos(){
 }
 $('login').onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$('email').value,password:$('password').value});if(error)status(error.message);else checkAdmin()};
 $('signup').onclick=async()=>{const btn=$('signup');btn.disabled=true;status('Creating account…');try{const email=$('email').value.trim(),password=$('password').value;if(!email||!password){status('Email and password—both required.');return}if(password.length<6){status('Password must be at least 6 characters.');return}const {error,data}=await sb.auth.signUp({email,password});if(error){status('Signup failed: '+error.message);return}status(data.user?'Account created. If email confirmation is enabled, check your inbox and confirm, then login.':'Signup request sent. Check your email.')}catch(e){status('Signup error: '+(e?.message||String(e)))}finally{btn.disabled=false}};
-$('logout').onclick=async()=>{await sb.auth.signOut();checkAdmin()};
+$('logout').onclick=async()=>{await sb.auth.signOut();checkAdmin()};$('adminLogout').onclick=async()=>{await sb.auth.signOut();checkAdmin()};
 $('save').onclick=async()=>{if(!currentAdmin)return;const payload={title:$('title').value.trim(),category:$('category').value.trim()||'New',poster_url:$('poster').value.trim()||null,video_url:$('videoUrl').value.trim(),published:$('published').checked};if(!payload.title||!payload.video_url){status('Title and video URL are required.');return}let q=$('editId').value?sb.from('videos').update(payload).eq('id',$('editId').value):sb.from('videos').insert(payload);const {error}=await q;if(error)status(error.message);else{status('Saved!');clearForm();loadVideos()}};
 $('clear').onclick=clearForm;
 sb.auth.onAuthStateChange(()=>setTimeout(checkAdmin,0));
