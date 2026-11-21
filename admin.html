@@ -18,7 +18,8 @@ function clearForm(){['title','category','poster','videoUrl','editId'].forEach(x
 async function checkAdmin(){
  const {data:{user}}=await sb.auth.getUser(); currentAdmin=false;
  $('logout').classList.toggle('hidden',!user);
- $('userInfo').textContent=user?'Signed in. User UUID: '+user.id+'\nAdmin role must be granted manually in Supabase SQL.':'';
+ $('userInfo').textContent=user?'Signed in. User UUID: '+user.id+'
+Admin role must be granted manually in Supabase SQL.':'';
  $('editor').classList.add('hidden');$('catalog').classList.add('hidden');$('auth').classList.remove('hidden');
  if(!user){status('Not signed in.');return}
  const {data,error}=await sb.from('admins').select('user_id').eq('user_id',user.id).maybeSingle();
@@ -64,7 +65,8 @@ async function uploadAsset(kind){
  if(!file){status('আগে একটি '+(isVideo?'video':'poster image')+' file নির্বাচন করো।');return false}
  if(isVideo && file.size>50*1024*1024){status('Free setup limit: video file must be 50 MB or smaller.');return false}
  const ext=file.name.split('.').pop().toLowerCase();
- const allowedType=['video/mp4','video/webm','video/quicktime'].includes(file.type)||['mp4','webm','mov'].includes(ext);\n if(isVideo && !allowedType){status('MP4, WebM অথবা MOV ভিডিও নির্বাচন করো।');return false}
+ const allowedType=['video/mp4','video/webm','video/quicktime'].includes(file.type)||['mp4','webm','mov'].includes(ext);
+ if(isVideo && !allowedType){status('MP4, WebM অথবা MOV ভিডিও নির্বাচন করো।');return false}
  const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
  const path=(isVideo?'videos/':'posters/')+Date.now()+'-'+safeName;
  status('Uploading '+(isVideo?'video':'poster')+'… please wait.');
