@@ -54,6 +54,40 @@ function closeModal(e){if(e.target.id==='overlay')hideModal()}
 function lockedVideo(title){openModal(title,'<p>This video is locked. The 3-ad unlock and real video access are still being built; no ads are being counted yet.</p>')}
 function playPreview(){openModal('Flower Preview','<p>Demo clip only — this is not a vault video.</p><video class="player" controls playsinline src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"></video>')}
 function navInfo(label){document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));event.currentTarget.classList.add('active');if(label==='Home'){document.getElementById('home').scrollIntoView({behavior:'smooth'});return}openModal(label,label==='Categories'?'Use the category chips above to filter videos.':label==='Unlocked'?'No videos have been unlocked yet.':'Profile settings will be added in a later step.')}
+
+// Supabase public catalog connection. Only published catalog entries are fetched.
+const SUPABASE_URL='https://bqienkfpdwhemomqnorx.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_9qZNVH5FUXW3iPsx2PVQjQ_fealhswM';
+async function loadPublishedVideos(){
+ try{
+  const res=await fetch(SUPABASE_URL+'/rest/v1/videos?select=id,title,category,poster_url,video_url&published=eq.true&order=created_at.desc',{
+   headers:{apikey:SUPABASE_PUBLISHABLE_KEY,Authorization:'Bearer '+SUPABASE_PUBLISHABLE_KEY}
+  });
+  if(!res.ok) throw new Error('Catalog request failed');
+  const remote=await res.json();
+  remote.forEach(v=>{
+   const card=document.createElement('div');card.className='video-card';
+   card.dataset.category=v.category||'New';card.dataset.title=v.title||'Video';card.dataset.remoteVideo=v.video_url||'';
+   card.onclick=()=>playRemoteVideo(card.dataset.title,card.dataset.remoteVideo);
+   const poster=document.createElement('div');poster.className='poster';
+   if(v.poster_url) poster.style.backgroundImage='url('+JSON.stringify(v.poster_url)+')';
+   const tag=document.createElement('span');tag.className='tag';tag.textContent=(v.category||'NEW').toUpperCase();
+   const title=document.createElement('div');title.className='poster-title';title.textContent=v.title||'Video';
+   poster.append(tag,title);
+   const info=document.createElement('div');info.className='card-info';
+   const strong=document.createElement('strong');strong.textContent=v.title||'Video';
+   const meta=document.createElement('p');meta.textContent=(v.category||'New')+' · Published';
+   info.append(strong,meta);card.append(poster,info);document.getElementById('videoGrid').append(card);cards.push(card);
+  });
+  refreshCards();
+ }catch(err){console.warn('Supabase catalog unavailable; demo catalog remains visible.',err)}
+}
+function playRemoteVideo(title,url){
+ if(!url){lockedVideo(title);return}
+ openModal(title,'<video class="player" controls playsinline src="'+url.replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'"></video>');
+}
+loadPublishedVideos();
+
 </script>
 </body>
 </html>
