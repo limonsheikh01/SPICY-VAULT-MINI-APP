@@ -35,22 +35,43 @@ async function loadVideos(){
 $('login').onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$('email').value,password:$('password').value});if(error)status(error.message);else checkAdmin()};
 $('signup').onclick=async()=>{const btn=$('signup');btn.disabled=true;status('Creating account…');try{const email=$('email').value.trim(),password=$('password').value;if(!email||!password){status('Email and password—both required.');return}if(password.length<6){status('Password must be at least 6 characters.');return}const {error,data}=await sb.auth.signUp({email,password});if(error){status('Signup failed: '+error.message);return}status(data.user?'Account created. If email confirmation is enabled, check your inbox and confirm, then login.':'Signup request sent. Check your email.')}catch(e){status('Signup error: '+(e?.message||String(e)))}finally{btn.disabled=false}};
 $('logout').onclick=async()=>{await sb.auth.signOut();checkAdmin()};$('adminLogout').onclick=async()=>{await sb.auth.signOut();checkAdmin()};
-$('save').onclick=async()=>{if(!currentAdmin)return;const payload={title:$('title').value.trim(),category:$('category').value.trim()||'New',poster_url:$('poster').value.trim()||uploadedPosterUrl||null,video_url:$('videoUrl').value.trim()||uploadedVideoUrl,published:$('published').checked};if(!payload.title){status('Video title লিখতে হবে।');return}if(!payload.video_url){status('Video URL পাওয়া যায়নি। Upload video file সফল হয়েছে কি না দেখো, অথবা Video URL দাও।');return}status('Saving video…');let q=$('editId').value?sb.from('videos').update(payload).eq('id',$('editId').value):sb.from('videos').insert(payload);const {error}=await q;if(error)status('Save failed: '+error.message);else{status('Video saved successfully!');clearForm();loadVideos()}};
+$('save').onclick=async()=>{
+ if(!currentAdmin)return;
+ // If a file is selected but no URL exists, upload it automatically before saving.
+ if(!$('videoUrl').value.trim()&&!uploadedVideoUrl&&$('videoFile').files[0]){
+  const ok=await uploadAsset('video');
+  if(!ok)return;
+ }
+ const payload={
+  title:$('title').value.trim(),
+  category:$('category').value.trim()||'New',
+  poster_url:$('poster').value.trim()||uploadedPosterUrl||null,
+  video_url:$('videoUrl').value.trim()||uploadedVideoUrl,
+  published:$('published').checked
+ };
+ if(!payload.title){status('Video title লিখতে হবে।');return}
+ if(!payload.video_url){status('ভিডিও ফাইল নির্বাচন করে Save video চাপো, অথবা Video URL দাও।');return}
+ status('Saving video…');
+ let q=$('editId').value?sb.from('videos').update(payload).eq('id',$('editId').value):sb.from('videos').insert(payload);
+ const {error}=await q;
+ if(error)status('Save failed: '+error.message);
+ else{status('Video saved successfully!');clearForm();loadVideos()}
+};
 
 async function uploadAsset(kind){
  if(!currentAdmin){status('Admin login required.');return}
  const isVideo=kind==='video', input=$(isVideo?'videoFile':'posterFile'), file=input.files[0];
- if(!file){status('আগে একটি '+(isVideo?'video':'poster image')+' file নির্বাচন করো।');return}
- if(isVideo && file.size>50*1024*1024){status('Free setup limit: video file must be 50 MB or smaller.');return}
- if(isVideo && !['video/mp4','video/webm','video/quicktime'].includes(file.type)){status('MP4, WebM অথবা MOV ভিডিও নির্বাচন করো।');return}
+ if(!file){status('আগে একটি '+(isVideo?'video':'poster image')+' file নির্বাচন করো।');return false}
+ if(isVideo && file.size>50*1024*1024){status('Free setup limit: video file must be 50 MB or smaller.');return false}
+ const ext=file.name.split('.').pop().toLowerCase();\n const allowedType=['video/mp4','video/webm','video/quicktime'].includes(file.type)||['mp4','webm','mov'].includes(ext);\n if(isVideo && !allowedType){status('MP4, WebM অথবা MOV ভিডিও নির্বাচন করো।');return false}
  const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
  const path=(isVideo?'videos/':'posters/')+Date.now()+'-'+safeName;
  status('Uploading '+(isVideo?'video':'poster')+'… please wait.');
  const {error}=await sb.storage.from('vault-videos').upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});
- if(error){status('Upload failed: '+error.message+' — check Storage SQL setup and file size.');return}
+ if(error){status('Upload failed: '+error.message+' — check Storage SQL setup and file size.');return false}
  const {data}=sb.storage.from('vault-videos').getPublicUrl(path);
  if(isVideo){uploadedVideoUrl=data.publicUrl;$('videoUrl').value=data.publicUrl}else{uploadedPosterUrl=data.publicUrl;$('poster').value=data.publicUrl}
- status((isVideo?'Video':'Poster')+' uploaded successfully. Now enter the title and press Save video.');
+ status((isVideo?'Video':'Poster')+' uploaded successfully.');\n return true;
 }
 $('uploadVideo').onclick=()=>uploadAsset('video');
 $('uploadPoster').onclick=()=>uploadAsset('poster');
