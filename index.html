@@ -66,33 +66,17 @@ function showVideoPlayer(title,url,note=''){
  full.addEventListener('click',async()=>{
   const entering=!wrap.classList.contains('fake-fullscreen');
   if(entering){
-   // Telegram Mini Apps need their own fullscreen API; browser fullscreen alone
-   // does not hide Telegram's surrounding interface.
-   let telegramFullscreen=false;
-   try{
-    if(tgApp&&typeof tgApp.requestFullscreen==='function'){
-     tgApp.requestFullscreen();
-     telegramFullscreen=true;
-    }
-   }catch(e){}
-   // Also request native video fullscreen where the WebView supports it.
-   try{
-    if(typeof video.requestFullscreen==='function') await video.requestFullscreen();
-    else if(typeof video.webkitEnterFullscreen==='function') video.webkitEnterFullscreen();
-   }catch(e){}
-   // CSS fallback keeps the video usable on WebViews without fullscreen APIs.
-   if(!telegramFullscreen&&!document.fullscreenElement&&!video.webkitDisplayingFullscreen){
-    wrap.classList.add('fake-fullscreen');
-   }
+   // Always apply an in-page fullscreen fallback: Telegram WebViews may expose
+   // the API but not actually enter fullscreen on older app versions.
+   wrap.classList.add('fake-fullscreen');
    full.textContent='✕ Exit fullscreen';
+   try{
+    if(tgApp&&typeof tgApp.requestFullscreen==='function')tgApp.requestFullscreen();
+   }catch(e){}
    try{if(screen.orientation&&screen.orientation.lock)await screen.orientation.lock('landscape')}catch(e){}
   }else{
    wrap.classList.remove('fake-fullscreen');
-   try{
-    if(tgApp&&typeof tgApp.exitFullscreen==='function')tgApp.exitFullscreen();
-    if(document.fullscreenElement&&document.exitFullscreen)await document.exitFullscreen();
-    else if(video.webkitDisplayingFullscreen&&video.webkitExitFullscreen)video.webkitExitFullscreen();
-   }catch(e){}
+   try{if(tgApp&&typeof tgApp.exitFullscreen==='function')tgApp.exitFullscreen()}catch(e){}
    try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock()}catch(e){}
    full.textContent='⛶ Fullscreen';
   }
