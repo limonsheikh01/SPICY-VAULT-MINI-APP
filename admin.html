@@ -12,9 +12,9 @@
 const SUPABASE_URL='https://bqienkfpdwhemomqnorx.supabase.co';
 const SUPABASE_KEY='sb_publishable_9qZNVH5FUXW3iPsx2PVQjQ_fealhswM';
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const $=id=>document.getElementById(id); let currentAdmin=false;
+const $=id=>document.getElementById(id); let currentAdmin=false; let uploadedVideoUrl=''; let uploadedPosterUrl='';
 function status(t){$('status').textContent=t}
-function clearForm(){['title','category','poster','videoUrl','editId'].forEach(x=>$(x).value='');$('posterFile').value='';$('videoFile').value='';$('published').checked=false}
+function clearForm(){['title','category','poster','videoUrl','editId'].forEach(x=>$(x).value='');$('posterFile').value='';$('videoFile').value='';$('published').checked=false;uploadedVideoUrl='';uploadedPosterUrl=''}
 async function checkAdmin(){
  const {data:{user}}=await sb.auth.getUser(); currentAdmin=false;
  $('logout').classList.toggle('hidden',!user);
@@ -35,7 +35,7 @@ async function loadVideos(){
 $('login').onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$('email').value,password:$('password').value});if(error)status(error.message);else checkAdmin()};
 $('signup').onclick=async()=>{const btn=$('signup');btn.disabled=true;status('Creating account…');try{const email=$('email').value.trim(),password=$('password').value;if(!email||!password){status('Email and password—both required.');return}if(password.length<6){status('Password must be at least 6 characters.');return}const {error,data}=await sb.auth.signUp({email,password});if(error){status('Signup failed: '+error.message);return}status(data.user?'Account created. If email confirmation is enabled, check your inbox and confirm, then login.':'Signup request sent. Check your email.')}catch(e){status('Signup error: '+(e?.message||String(e)))}finally{btn.disabled=false}};
 $('logout').onclick=async()=>{await sb.auth.signOut();checkAdmin()};$('adminLogout').onclick=async()=>{await sb.auth.signOut();checkAdmin()};
-$('save').onclick=async()=>{if(!currentAdmin)return;const payload={title:$('title').value.trim(),category:$('category').value.trim()||'New',poster_url:$('poster').value.trim()||null,video_url:$('videoUrl').value.trim(),published:$('published').checked};if(!payload.title||!payload.video_url){status('Title and video URL are required.');return}let q=$('editId').value?sb.from('videos').update(payload).eq('id',$('editId').value):sb.from('videos').insert(payload);const {error}=await q;if(error)status(error.message);else{status('Saved!');clearForm();loadVideos()}};
+$('save').onclick=async()=>{if(!currentAdmin)return;const payload={title:$('title').value.trim(),category:$('category').value.trim()||'New',poster_url:$('poster').value.trim()||uploadedPosterUrl||null,video_url:$('videoUrl').value.trim()||uploadedVideoUrl,published:$('published').checked};if(!payload.title){status('Video title লিখতে হবে।');return}if(!payload.video_url){status('Video URL পাওয়া যায়নি। Upload video file সফল হয়েছে কি না দেখো, অথবা Video URL দাও।');return}status('Saving video…');let q=$('editId').value?sb.from('videos').update(payload).eq('id',$('editId').value):sb.from('videos').insert(payload);const {error}=await q;if(error)status('Save failed: '+error.message);else{status('Video saved successfully!');clearForm();loadVideos()}};
 
 async function uploadAsset(kind){
  if(!currentAdmin){status('Admin login required.');return}
@@ -49,8 +49,8 @@ async function uploadAsset(kind){
  const {error}=await sb.storage.from('vault-videos').upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});
  if(error){status('Upload failed: '+error.message+' — check Storage SQL setup and file size.');return}
  const {data}=sb.storage.from('vault-videos').getPublicUrl(path);
- $(isVideo?'videoUrl':'poster').value=data.publicUrl;
- status((isVideo?'Video':'Poster')+' uploaded successfully. URL added to form. Now press Save video.');
+ if(isVideo){uploadedVideoUrl=data.publicUrl;$('videoUrl').value=data.publicUrl}else{uploadedPosterUrl=data.publicUrl;$('poster').value=data.publicUrl}
+ status((isVideo?'Video':'Poster')+' uploaded successfully. Now enter the title and press Save video.');
 }
 $('uploadVideo').onclick=()=>uploadAsset('video');
 $('uploadPoster').onclick=()=>uploadAsset('poster');
