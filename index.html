@@ -20,19 +20,22 @@ main{max-width:760px;margin:auto;padding:0 16px}
 .wide-card{margin-top:16px;background:linear-gradient(120deg,#201216,#151519);border:1px solid #332126;border-radius:16px;padding:15px;display:flex;gap:12px;align-items:center}.wide-icon{font-size:27px}.wide-card strong{display:block;font-size:14px;margin-bottom:4px}.wide-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.45}
 .bottom{position:fixed;bottom:0;left:0;right:0;background:rgba(12,12,14,.96);border-top:1px solid #25252a;display:flex;justify-content:space-around;padding:12px 10px calc(12px + env(safe-area-inset-bottom));z-index:10}.navitem{font-size:11px;color:#888;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:0}.navitem.active{color:#ff5968;font-weight:700}.navitem span:first-child{font-size:19px}
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:20;align-items:center;justify-content:center;padding:18px}.modal{background:#19191e;border:1px solid #34343b;border-radius:18px;padding:20px;max-width:520px;width:100%;max-height:90vh;overflow:auto}.modal h3{margin:0 0 10px}.modal p{color:#c4c4cb;line-height:1.5;font-size:14px}.close{background:#303038;color:white;border:0;border-radius:9px;padding:10px 15px;margin-top:12px}.player{width:100%;display:block;border-radius:12px;background:#000;max-height:60vh}.player-wrap{position:relative;width:100%}.player-wrap:fullscreen{background:#000;display:grid;place-items:center}.player-wrap:fullscreen .player{width:100%;height:100%;max-height:100vh;object-fit:contain}.player-wrap.fake-fullscreen{position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;border-radius:0;padding:0}.player-wrap.fake-fullscreen .player{width:100%;height:100%;max-height:100%;object-fit:contain;border-radius:0}.player-wrap.fake-fullscreen .fullscreen-btn{bottom:max(18px,env(safe-area-inset-bottom));right:16px}.fullscreen-btn{position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.72);color:#fff;border:1px solid #777;border-radius:8px;padding:9px 12px;font-size:14px;z-index:2}.empty{display:none;color:#aaa;font-size:13px;padding:18px;text-align:center}
-.page-panel{display:none;padding:4px 0 20px}.page-panel.active{display:block}.panel-heading{font-size:18px;font-weight:800;margin:18px 0 12px}.profile-card,.unlocked-card{background:#151519;border:1px solid #292930;border-radius:16px;padding:16px;margin:12px 0}.profile-avatar{width:52px;height:52px;border-radius:50%;background:#292932;display:grid;place-items:center;font-size:24px;margin-bottom:10px}.profile-card p,.unlocked-card p{color:#aaa;font-size:13px;line-height:1.45}.action-btn{width:100%;border:1px solid #35353e;background:#202027;color:#fff;padding:12px;border-radius:10px;margin:6px 0;font-weight:700}.category-row{display:flex;gap:8px;flex-wrap:wrap}.category-row button{border:1px solid #333;background:#19191e;color:#ddd;padding:9px 13px;border-radius:30px}.category-row button.active{background:var(--red);border-color:var(--red)}
+.page-panel{display:none;padding:4px 0 20px}.page-panel.active{display:block}#homeContent.hidden{display:none!important}.panel-heading{font-size:18px;font-weight:800;margin:18px 0 12px}.profile-card,.unlocked-card{background:#151519;border:1px solid #292930;border-radius:16px;padding:16px;margin:12px 0}.profile-avatar{width:52px;height:52px;border-radius:50%;background:#292932;display:grid;place-items:center;font-size:24px;margin-bottom:10px}.profile-card p,.unlocked-card p{color:#aaa;font-size:13px;line-height:1.45}.action-btn{width:100%;border:1px solid #35353e;background:#202027;color:#fff;padding:12px;border-radius:10px;margin:6px 0;font-weight:700}.category-row{display:flex;gap:8px;flex-wrap:wrap}.category-row button{border:1px solid #333;background:#19191e;color:#ddd;padding:9px 13px;border-radius:30px}.category-row button.active{background:var(--red);border-color:var(--red)}
 </style>
 </head>
 <body>
 <header><div class="brand">SPICY <span>VAULT</span></div><div class="profile">✦</div></header>
 <main id="home">
+<div id="homeContent">
 <div class="search">⌕ <input id="searchBox" placeholder="Search videos..." aria-label="Search videos"></div>
 <section class="hero"><div class="eyebrow">WATCH • DISCOVER</div><h1>Your next favorite<br>starts here.</h1><p>Explore hand-picked videos in your vault.</p><button class="cta" onclick="document.getElementById('catalog').scrollIntoView({behavior:'smooth'})">Explore Collection ↗</button></section>
 <div class="section-head"><h2>Browse Categories</h2><small>Explore vault</small></div>
 <div class="chips" id="chips"><button class="chip active" data-category="All">All</button></div>
-<div class="section-head" id="catalog"><h2>Videos</h2><small>Latest uploads</small></div>
+<div class="section-head" id="catalog"><h2>Videos</h2><small id="catalogStatus">Loading videos…</small></div>
+<div id="catalogMessage" class="empty" style="display:block">Connecting to video catalog…</div>
 <div class="grid" id="videoGrid"></div>
 <div class="empty" id="emptyState">No videos published yet. Check back soon.</div>
+</div>
 <section class="page-panel" id="categoriesPanel"><div class="panel-heading">All Categories</div><div class="category-row" id="categoryList"></div><p style="color:#999;font-size:13px;margin-top:14px">Choose a category to filter videos.</p></section>
 <section class="page-panel" id="unlockedPanel"><div class="panel-heading">Unlocked Videos</div><div class="unlocked-card"><strong>🔓 Your unlocked collection</strong><p>Unlocked videos will appear here when the unlock feature is activated.</p></div></section>
 <section class="page-panel" id="profilePanel"><div class="panel-heading">Profile</div><div class="profile-card"><div class="profile-avatar" id="profileAvatar">✦</div><strong id="profileName">SPICY VAULT Member</strong><p id="profileUsername">Telegram Mini App member profile.</p><button class="action-btn" id="profileRefresh">Refresh catalog</button></div></section>
@@ -81,20 +84,40 @@ function showVideoPlayer(title,url,note=''){
  });
  wrap.append(video,full);body.append(wrap);
 }
-function showPage(label,btn){document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));if(btn)btn.classList.add('active');document.querySelectorAll('.page-panel').forEach(p=>p.classList.remove('active'));if(label==='Home'){document.getElementById('home').scrollIntoView({behavior:'smooth',block:'start'});return}const panel=document.getElementById(label==='Categories'?'categoriesPanel':label==='Unlocked'?'unlockedPanel':'profilePanel');if(!panel)return;panel.classList.add('active');if(label==='Categories')renderCategories();if(label==='Profile'){renderProfile();const refresh=document.getElementById('profileRefresh');if(refresh)refresh.onclick=async()=>{refresh.textContent='Refreshing…';await loadPublishedVideos();refresh.textContent='Refresh catalog'}}panel.scrollIntoView({behavior:'smooth',block:'start'})}
+function showPage(label,btn){
+ document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));
+ if(btn)btn.classList.add('active');
+ document.querySelectorAll('.page-panel').forEach(p=>p.classList.remove('active'));
+ const home=document.getElementById('homeContent');
+ if(label==='Home'){
+  home.classList.remove('hidden');
+  window.scrollTo({top:0,behavior:'smooth'});
+  return;
+ }
+ home.classList.add('hidden');
+ const panel=document.getElementById(label==='Categories'?'categoriesPanel':label==='Unlocked'?'unlockedPanel':'profilePanel');
+ if(!panel)return;
+ panel.classList.add('active');
+ if(label==='Categories')renderCategories();
+ if(label==='Profile'){renderProfile();const refresh=document.getElementById('profileRefresh');if(refresh)refresh.onclick=async()=>{refresh.textContent='Refreshing…';await loadPublishedVideos();refresh.textContent='Refresh catalog'}}
+ window.scrollTo({top:0,behavior:'smooth'});
+}
 function renderProfile(){const u=tgApp&&tgApp.initDataUnsafe&&tgApp.initDataUnsafe.user?tgApp.initDataUnsafe.user:null;const nameEl=document.getElementById('profileName'),userEl=document.getElementById('profileUsername'),avatarEl=document.getElementById('profileAvatar');if(!u){nameEl.textContent='SPICY VAULT Member';userEl.textContent='Open this app inside Telegram to view your profile details.';avatarEl.textContent='✦';return}const full=[u.first_name,u.last_name].filter(Boolean).join(' ').trim()||'Telegram Member';nameEl.textContent=full;userEl.textContent=u.username?'@'+u.username:'Telegram user';avatarEl.textContent=(u.first_name||full).charAt(0).toUpperCase()||'✦'}\nfunction renderCategories(){const list=document.getElementById('categoryList');list.innerHTML='';const cats=[...new Set(cards.map(c=>c.dataset.category).filter(Boolean))];if(!cats.length){list.textContent='No published categories yet.';return}cats.forEach(cat=>{const b=document.createElement('button');b.textContent=cat;b.onclick=()=>{activeCategory=cat;document.querySelectorAll('.chip').forEach(ch=>ch.classList.remove('active'));const chip=[...document.querySelectorAll('.chip')].find(x=>x.dataset.category===cat);if(chip)chip.classList.add('active');else{const fresh=document.createElement('button');fresh.className='chip';fresh.dataset.category=cat;fresh.textContent=cat;fresh.onclick=()=>{activeCategory=cat;refreshCards()};document.getElementById('chips').append(fresh);fresh.classList.add('active')}document.querySelectorAll('.page-panel').forEach(p=>p.classList.remove('active'));document.getElementById('home').classList.remove('page-open');document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));document.querySelector('.navitem').classList.add('active');refreshCards();document.getElementById('catalog').scrollIntoView({behavior:'smooth',block:'start'})};list.append(b)})}
 
 // Supabase public catalog connection. Only published catalog entries are fetched.
 const SUPABASE_URL='https://bqienkfpdwhemomqnorx.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_9qZNVH5FUXW3iPsx2PVQjQ_fealhswM';
 async function loadPublishedVideos(){
+ const statusEl=document.getElementById('catalogStatus'),msg=document.getElementById('catalogMessage'),grid=document.getElementById('videoGrid');
+ statusEl.textContent='Loading…';msg.style.display='block';msg.textContent='Loading published videos…';
+ grid.innerHTML='';
+ cards.splice(0,cards.length,...document.querySelectorAll('.video-card'));
  try{
   const res=await fetch(SUPABASE_URL+'/rest/v1/videos?select=id,title,category,poster_url,video_url&published=eq.true&order=created_at.desc',{
    headers:{apikey:SUPABASE_PUBLISHABLE_KEY,Authorization:'Bearer '+SUPABASE_PUBLISHABLE_KEY}
   });
-  if(!res.ok) throw new Error('Catalog request failed');
+  if(!res.ok){const detail=await res.text();throw new Error('Catalog HTTP '+res.status+(detail?': '+detail.slice(0,220):''))}
   const remote=await res.json();
-  // Add database categories to the category chips automatically.
   const remoteCategories=[...new Set(remote.map(v=>(v.category||'New').trim()).filter(Boolean))];
   const chips=document.getElementById('chips');
   remoteCategories.forEach(cat=>{
@@ -108,25 +131,19 @@ async function loadPublishedVideos(){
    card.dataset.category=v.category||'New';card.dataset.title=v.title||'Video';card.dataset.remoteVideo=v.video_url||'';
    card.onclick=()=>playRemoteVideo(card.dataset.title,card.dataset.remoteVideo);
    const poster=document.createElement('div');poster.className='poster';
-   if(v.poster_url){
-    const posterImg=document.createElement('img');
-    posterImg.className='poster-image';
-    posterImg.alt=v.title||'Video poster';
-    posterImg.loading='lazy';
-    posterImg.src=v.poster_url;
-    posterImg.onerror=()=>{posterImg.remove();poster.classList.add('poster-missing')};
-    poster.append(posterImg);
-   }else{poster.classList.add('poster-missing')}
+   if(v.poster_url){const posterImg=document.createElement('img');posterImg.className='poster-image';posterImg.alt=v.title||'Video poster';posterImg.loading='lazy';posterImg.src=v.poster_url;posterImg.onerror=()=>{posterImg.remove();poster.classList.add('poster-missing')};poster.append(posterImg)}else poster.classList.add('poster-missing');
    const tag=document.createElement('span');tag.className='tag';tag.textContent=(v.category||'NEW').toUpperCase();
-   const title=document.createElement('div');title.className='poster-title';title.textContent=v.title||'Video';
-   poster.append(tag,title);
-   const info=document.createElement('div');info.className='card-info';
-   const strong=document.createElement('strong');strong.textContent=v.title||'Video';
-   const meta=document.createElement('p');meta.textContent=(v.category||'New')+' · Published';
-   info.append(strong,meta);card.append(poster,info);document.getElementById('videoGrid').append(card);cards.push(card);
+   const title=document.createElement('div');title.className='poster-title';title.textContent=v.title||'Video';poster.append(tag,title);
+   const info=document.createElement('div');info.className='card-info';const strong=document.createElement('strong');strong.textContent=v.title||'Video';const meta=document.createElement('p');meta.textContent=(v.category||'New')+' · Published';info.append(strong,meta);card.append(poster,info);grid.append(card);cards.push(card);
   });
+  statusEl.textContent=remote.length+' videos';
+  msg.style.display=remote.length?'none':'block';msg.textContent=remote.length?'':'No published videos found. Admin panel e video Published check koro.';
   refreshCards();
- }catch(err){console.warn('Supabase catalog unavailable; published catalog is shown when available.',err)}
+ }catch(err){
+  console.error('Catalog load error:',err);
+  statusEl.textContent='Catalog error';
+  msg.style.display='block';msg.textContent='Videos load hocche na: '+(err.message||String(err))+' — refresh/reload try koro.';
+ }
 }
 function playRemoteVideo(title,url){
  if(!url){lockedVideo(title);return}
