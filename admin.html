@@ -5,7 +5,7 @@
 </style></head><body><main><h1>SPICY VAULT Admin</h1>
 <p class="status" id="status">Loading Supabase connection…</p>
 <section id="auth"><h2>Admin sign in / sign up</h2><input id="email" type="email" placeholder="Email"><input id="password" type="password" placeholder="Password"><button id="login">Login</button><button class="secondary" id="signup">Create account</button><button class="secondary hidden" id="logout">Logout</button><p class="status" id="userInfo"></p></section>
-<section id="editor" class="hidden"><h2>Add or edit video</h2><input id="title" placeholder="Video title"><input id="category" placeholder="Category (Trending/New/Popular)"><input id="poster" placeholder="Poster image URL (or upload image below)"><label>Choose poster image<input id="posterFile" type="file" accept="image/*"></label><button type="button" class="secondary" id="uploadPoster">Upload poster image</button><input id="videoUrl" placeholder="Video URL (or upload video below)"><label>Choose video file<input id="videoFile" type="file" accept="video/mp4,video/webm,video/quicktime"></label><button type="button" class="secondary" id="uploadVideo">Upload video file (max 50 MB)</button><label><input id="published" type="checkbox" style="width:auto"> Published (show in Mini App)</label><button id="save">Save video</button><button class="secondary" id="clear">Clear form</button><input id="editId" type="hidden"></section>
+<section id="editor" class="hidden"><h2>Add or edit video</h2><input id="title" placeholder="Video title"><input id="category" placeholder="Category (Trending/New/Popular)"><input id="poster" placeholder="Poster image URL (or upload image below)"><label>Choose poster image<input id="posterFile" type="file" accept="image/*"></label><button type="button" class="secondary" id="uploadPoster">Upload poster image</button><input id="videoUrl" placeholder="Video URL (or upload video below)"><label>Choose video file<input id="videoFile" type="file" accept="video/mp4,video/webm,video/quicktime"></label><button type="button" class="secondary" id="uploadVideo">Upload video file (max 50 MB)</button><label><input id="published" type="checkbox" style="width:auto" checked> Published (show in Mini App)</label><button id="save">Save video</button><button class="secondary" id="clear">Clear form</button><input id="editId" type="hidden"></section>
 <section id="catalog" class="hidden"><h2>Database videos</h2><button class="secondary" id="adminLogout">Logout</button><div id="list"></div></section></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -14,7 +14,7 @@ const SUPABASE_KEY='sb_publishable_9qZNVH5FUXW3iPsx2PVQjQ_fealhswM';
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id); let currentAdmin=false; let uploadedVideoUrl=''; let uploadedPosterUrl='';
 function status(t){$('status').textContent=t}
-function clearForm(){['title','category','poster','videoUrl','editId'].forEach(x=>$(x).value='');$('posterFile').value='';$('videoFile').value='';$('published').checked=false;uploadedVideoUrl='';uploadedPosterUrl=''}
+function clearForm(){['title','category','poster','videoUrl','editId'].forEach(x=>$(x).value='');$('posterFile').value='';$('videoFile').value='';$('published').checked=true;uploadedVideoUrl='';uploadedPosterUrl=''}
 async function checkAdmin(){
  const {data:{user}}=await sb.auth.getUser(); currentAdmin=false;
  $('logout').classList.toggle('hidden',!user);
