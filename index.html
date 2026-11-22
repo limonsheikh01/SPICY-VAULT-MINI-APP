@@ -108,6 +108,15 @@ async function loadPublishedVideos(){
   });
   if(!res.ok) throw new Error('Catalog request failed');
   const remote=await res.json();
+  // Add database categories to the category chips automatically.
+  const remoteCategories=[...new Set(remote.map(v=>(v.category||'New').trim()).filter(Boolean))];
+  const chips=document.getElementById('chips');
+  remoteCategories.forEach(cat=>{
+   if([...chips.querySelectorAll('.chip')].some(ch=>ch.dataset.category.toLowerCase()===cat.toLowerCase()))return;
+   const chip=document.createElement('button');chip.className='chip';chip.dataset.category=cat;chip.textContent=cat;
+   chip.addEventListener('click',()=>{document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));chip.classList.add('active');activeCategory=cat;refreshCards()});
+   chips.append(chip);
+  });
   remote.forEach(v=>{
    const card=document.createElement('div');card.className='video-card';
    card.dataset.category=v.category||'New';card.dataset.title=v.title||'Video';card.dataset.remoteVideo=v.video_url||'';
