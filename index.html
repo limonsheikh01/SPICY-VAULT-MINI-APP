@@ -67,7 +67,7 @@ function showVideoPlayer(title,url,note=''){
  const body=document.getElementById('modalBody');
  if(note){const p=document.createElement('p');p.textContent=note;body.append(p)}
  const wrap=document.createElement('div');wrap.className='player-wrap video-container';
- const isEmbed=/lplaygo\\.com\\/e\\//i.test(url)||/\\.html?(?:[?#]|$)/i.test(url);
+ const isEmbed=url.includes('lplaygo.com/e/')||url.toLowerCase().includes('.html');
  let video;
  if(isEmbed){
   video=document.createElement('iframe');video.className='player embed-player';video.src=url;video.title=title;video.setAttribute('allow','autoplay; encrypted-media; picture-in-picture; fullscreen');video.setAttribute('allowfullscreen','');video.setAttribute('webkitallowfullscreen','');video.setAttribute('mozallowfullscreen','');video.setAttribute('referrerpolicy','strict-origin-when-cross-origin');video.setAttribute('frameborder','0');
