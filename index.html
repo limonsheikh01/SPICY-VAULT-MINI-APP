@@ -36,10 +36,10 @@ main{max-width:760px;margin:auto;padding:0 16px}
 <div class="empty" id="emptyState">No videos published yet. Check back soon.</div>
 </div>
 <section class="page-panel" id="categoriesPanel"><div class="panel-heading">All Categories</div><div class="category-row" id="categoryList"></div><p style="color:#999;font-size:13px;margin-top:14px">Choose a category to filter videos.</p></section>
-<section class="page-panel" id="unlockedPanel"><div class="panel-heading">Unlocked Videos</div><div class="unlocked-card"><strong>🔓 Your unlocked collection</strong><p>Unlocked videos will appear here when the unlock feature is activated.</p></div></section><section class="page-panel" id="favoritesPanel"><div class="panel-heading">My Favorites ❤️</div><p class="favorites-intro">Your saved videos, all in one place.</p><div class="grid" id="favoritesGrid"></div><div class="empty" id="favoritesEmpty" style="display:block">No favorites yet. Tap the heart on a video to save it here.</div></section>
+<section class="page-panel" id="favoritesPanel"><div class="panel-heading">My Favorites ❤️</div><p class="favorites-intro">Your saved videos, all in one place.</p><div class="grid" id="favoritesGrid"></div><div class="empty" id="favoritesEmpty" style="display:block">No favorites yet. Tap the heart on a video to save it here.</div></section>
 <section class="page-panel" id="profilePanel"><div class="panel-heading">My Profile</div><div class="profile-card profile-main-card"><div class="profile-top"><div class="profile-avatar" id="profileAvatar">✦</div><div class="profile-identity"><strong id="profileName">SPICY VAULT Member</strong><p id="profileUsername">Telegram Mini App member profile.</p><span class="profile-status" id="profileStatus">Guest session</span></div></div><div class="profile-divider"></div><div class="profile-detail"><span>Account</span><strong id="profileAccountType">Guest</strong></div><div class="profile-detail"><span>Member since</span><strong>Welcome to SPICY VAULT</strong></div><button class="action-btn profile-refresh" id="profileRefresh">↻ &nbsp; Refresh video catalog</button></div><div class="profile-note"><span>✦</span><div><strong>Your private vault</strong><p>Your profile details are read from Telegram. They are not shared publicly by this page.</p></div></div><div class="profile-footer">SPICY VAULT <span>•</span> Your entertainment space</div></section>
 </main>
-<nav class="bottom"><button class="navitem active" onclick="showPage('Home',this)"><span>⌂</span>Home</button><button class="navitem" onclick="showPage('Categories',this)"><span>▦</span>Categories</button><button class="navitem" onclick="showPage('Unlocked',this)"><span>🔓</span>Unlocked</button><button class="navitem" onclick="showPage('Favorites',this)"><span>♥</span>Favorites</button><button class="navitem" onclick="showPage('Profile',this)"><span>♙</span>Profile</button></nav>
+<nav class="bottom"><button class="navitem active" onclick="showPage('Home',this)"><span>⌂</span>Home</button><button class="navitem" onclick="showPage('Categories',this)"><span>▦</span>Categories</button><button class="navitem" onclick="showPage('Favorites',this)"><span>♥</span>Favorites</button><button class="navitem" onclick="showPage('Profile',this)"><span>♙</span>Profile</button></nav>
 <div class="overlay" id="overlay" onclick="closeModal(event)"><div class="modal" onclick="event.stopPropagation()"><h3 id="modalTitle">SPICY VAULT</h3><div id="modalBody"></div><button class="close" onclick="hideModal()">Close</button></div></div>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
@@ -106,7 +106,7 @@ function showPage(label,btn){
   return;
  }
  home.classList.add('hidden');
- const panel=document.getElementById(label==='Categories'?'categoriesPanel':label==='Unlocked'?'unlockedPanel':label==='Favorites'?'favoritesPanel':'profilePanel');
+ const panel=document.getElementById(label==='Categories'?'categoriesPanel':label==='Favorites'?'favoritesPanel':'profilePanel');
  if(!panel)return;
  panel.classList.add('active');
  if(label==='Categories')renderCategories();
