@@ -28,17 +28,11 @@ main{max-width:760px;margin:auto;padding:0 16px}
 <div class="search">⌕ <input id="searchBox" placeholder="Search videos..." aria-label="Search videos"></div>
 <section class="hero"><div class="eyebrow">WATCH • DISCOVER</div><h1>Your next favorite<br>starts here.</h1><p>Explore hand-picked videos in your vault.</p><button class="cta" onclick="document.getElementById('catalog').scrollIntoView({behavior:'smooth'})">Explore Collection ↗</button></section>
 <div class="section-head"><h2>Browse Categories</h2><small>Explore vault</small></div>
-<div class="chips" id="chips"><button class="chip active" data-category="All">All</button><button class="chip" data-category="Trending">Trending</button><button class="chip" data-category="New">New</button><button class="chip" data-category="Popular">Popular</button></div>
-<div class="section-head" id="catalog"><h2>Featured Videos</h2><small>Preview & unlock</small></div>
-<div class="grid" id="videoGrid">
-<div class="video-card" data-category="Trending" data-title="Midnight Stories" data-locked="true" onclick="lockedVideo('Midnight Stories')"><div class="poster" style="background-image:url('https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=700&q=85')"><span class="tag">TRENDING</span><span class="lock">🔒</span><div class="poster-title">Midnight Stories</div></div><div class="card-info"><strong>Midnight Stories</strong><p>Premium collection · Locked</p></div></div>
-<div class="video-card" data-category="New" data-title="Hidden Paradise" data-locked="true" onclick="lockedVideo('Hidden Paradise')"><div class="poster" style="background-image:url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=700&q=85')"><span class="tag">NEW</span><span class="lock">🔒</span><div class="poster-title">Hidden Paradise</div></div><div class="card-info"><strong>Hidden Paradise</strong><p>New arrival · Locked</p></div></div>
-<div class="video-card" data-category="Popular" data-title="Ocean Dreams" data-locked="true" onclick="lockedVideo('Ocean Dreams')"><div class="poster" style="background-image:url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=700&q=85')"><span class="tag">POPULAR</span><span class="lock">🔒</span><div class="poster-title">Ocean Dreams</div></div><div class="card-info"><strong>Ocean Dreams</strong><p>Popular pick · Locked</p></div></div>
-<div class="video-card" data-category="Trending" data-title="Wild Journey" data-locked="true" onclick="lockedVideo('Wild Journey')"><div class="poster" style="background-image:url('https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=700&q=85')"><span class="tag">TRENDING</span><span class="lock">🔒</span><div class="poster-title">Wild Journey</div></div><div class="card-info"><strong>Wild Journey</strong><p>Featured · Locked</p></div></div>
-<div class="video-card" data-category="New" data-title="Flower Preview" data-locked="false" onclick="playPreview()"><div class="poster" style="background-image:url('https://images.unsplash.com/photo-1490750967868-88aa4486-c6b5?auto=format&fit=crop&w=700&q=85')"><span class="tag">PREVIEW</span><div class="poster-title">Flower Preview</div></div><div class="card-info"><strong>Flower Preview</strong><p>Sample clip · Play now</p></div></div>
-</div>
-<div class="empty" id="emptyState">No videos match your search.</div>
-<div class="wide-card"><div class="wide-icon">🔐</div><div><strong>Premium unlocks</strong><p>Locked videos will require 3 verified ad completions. This feature is not live yet.</p></div></div>
+<div class="chips" id="chips"><button class="chip active" data-category="All">All</button></div>
+<div class="section-head" id="catalog"><h2>Videos</h2><small>Latest uploads</small></div>
+<div class="grid" id="videoGrid"></div>
+<div class="empty" id="emptyState">No videos published yet. Check back soon.</div>
+
 </main>
 <nav class="bottom"><button class="navitem active" onclick="navInfo('Home')"><span>⌂</span>Home</button><button class="navitem" onclick="navInfo('Categories')"><span>▦</span>Categories</button><button class="navitem" onclick="navInfo('Unlocked')"><span>🔓</span>Unlocked</button><button class="navitem" onclick="navInfo('Profile')"><span>♙</span>Profile</button></nav>
 <div class="overlay" id="overlay" onclick="closeModal(event)"><div class="modal" onclick="event.stopPropagation()"><h3 id="modalTitle">SPICY VAULT</h3><div id="modalBody"></div><button class="close" onclick="hideModal()">Close</button></div></div>
@@ -48,6 +42,7 @@ const tgApp=window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null;
 if(tgApp){try{tgApp.ready();tgApp.expand()}catch(e){}}
 let activeCategory='All';
 const cards=[...document.querySelectorAll('.video-card')];
+refreshCards();
 function refreshCards(){const q=document.getElementById('searchBox').value.trim().toLowerCase();let visible=0;cards.forEach(card=>{const catOk=activeCategory==='All'||card.dataset.category===activeCategory;const searchOk=card.dataset.title.toLowerCase().includes(q);card.style.display=catOk&&searchOk?'':'none';if(catOk&&searchOk)visible++});document.getElementById('emptyState').style.display=visible?'none':'block'}
 document.querySelectorAll('.chip').forEach(chip=>chip.addEventListener('click',()=>{document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));chip.classList.add('active');activeCategory=chip.dataset.category;refreshCards()}));
 document.getElementById('searchBox').addEventListener('input',refreshCards);
@@ -127,7 +122,7 @@ async function loadPublishedVideos(){
    info.append(strong,meta);card.append(poster,info);document.getElementById('videoGrid').append(card);cards.push(card);
   });
   refreshCards();
- }catch(err){console.warn('Supabase catalog unavailable; demo catalog remains visible.',err)}
+ }catch(err){console.warn('Supabase catalog unavailable; published catalog is shown when available.',err)}
 }
 function playRemoteVideo(title,url){
  if(!url){lockedVideo(title);return}
