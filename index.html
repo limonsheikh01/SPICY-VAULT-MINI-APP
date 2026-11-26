@@ -49,6 +49,33 @@ main{max-width:760px;margin:auto;padding:0 16px}
 <script>
 const tgApp=window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null;
 if(tgApp){try{tgApp.ready();tgApp.expand()}catch(e){}}
+
+const SV_SUPABASE_URL='https://bqienkfpdwhemomqnorx.supabase.co';
+const SV_SUPABASE_KEY='sb_publishable_9qZNVH5FUXW3iPsx2PVQjQ_fealhswM';
+const svTelegramUser=tgApp?.initDataUnsafe?.user||null;
+let svViewerKey='';
+try{
+ if(svTelegramUser?.id) svViewerKey='tg:'+svTelegramUser.id;
+ else{
+  svViewerKey=localStorage.getItem('spicyVaultViewerKey')||'';
+  if(!svViewerKey){svViewerKey='web:'+((crypto.randomUUID&&crypto.randomUUID())||('web-'+Date.now()+'-'+Math.random().toString(36).slice(2)));localStorage.setItem('spicyVaultViewerKey',svViewerKey)}
+ }
+}catch(e){svViewerKey='web:session-'+Date.now()}
+async function svHeartbeat(){
+ if(!svViewerKey||document.visibilityState==='hidden')return;
+ const displayName=svTelegramUser?[svTelegramUser.first_name,svTelegramUser.last_name].filter(Boolean).join(' '):'Web visitor';
+ const username=svTelegramUser?.username||null;
+ const payload={user_key:svViewerKey,display_name:displayName||'Telegram member',username,platform:svTelegramUser?'Telegram':'Web',last_seen:new Date().toISOString()};
+ try{await fetch(SV_SUPABASE_URL+'/rest/v1/app_presence?on_conflict=user_key',{method:'POST',headers:{apikey:SV_SUPABASE_KEY,Authorization:'Bearer '+SV_SUPABASE_KEY,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload),keepalive:true})}catch(e){console.warn('Presence update failed',e)}
+}
+svHeartbeat();
+setInterval(svHeartbeat,45000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')svHeartbeat()});
+async function svRecordVideoView(videoId,title){
+ if(!videoId||!svViewerKey)return;
+ try{await fetch(SV_SUPABASE_URL+'/rest/v1/video_views',{method:'POST',headers:{apikey:SV_SUPABASE_KEY,Authorization:'Bearer '+SV_SUPABASE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({video_id:videoId,viewer_key:svViewerKey,video_title:title||'Video'})})}
+ catch(e){console.warn('Video view tracking failed',e)}
+}
 let activeCategory='All';
 const cards=[...document.querySelectorAll('.video-card')];
 let favorites=new Set();try{favorites=new Set(JSON.parse(localStorage.getItem('spicyVaultFavorites')||'[]'))}catch(e){}
@@ -144,7 +171,7 @@ async function loadPublishedVideos(){
   remote.forEach(v=>{
    const card=document.createElement('div');card.className='video-card';
    card.dataset.category=v.category||'New';card.dataset.title=v.title||'Video';card.dataset.favoriteId=String(v.id||('video-'+(v.title||'').toLowerCase().replace(/[^a-z0-9]+/g,'-')));card.dataset.remoteVideo=v.video_url||'';
-   card.onclick=()=>playRemoteVideo(card.dataset.title,card.dataset.remoteVideo);
+   card.onclick=()=>playRemoteVideo(card.dataset.title,card.dataset.remoteVideo,card.dataset.favoriteId);
    const poster=document.createElement('div');poster.className='poster';
    if(v.poster_url){const posterImg=document.createElement('img');posterImg.className='poster-image';posterImg.alt=v.title||'Video poster';posterImg.loading='lazy';posterImg.src=v.poster_url;posterImg.onerror=()=>{posterImg.remove();poster.classList.add('poster-missing')};poster.append(posterImg)}else poster.classList.add('poster-missing');
    const tag=document.createElement('span');tag.className='tag';tag.textContent=(v.category||'NEW').toUpperCase();
@@ -161,8 +188,9 @@ async function loadPublishedVideos(){
   msg.style.display='block';msg.textContent='Videos load hocche na: '+(err.message||String(err))+' — refresh/reload try koro.';
  }
 }
-function playRemoteVideo(title,url){
+function playRemoteVideo(title,url,videoId){
  if(!url){lockedVideo(title);return}
+ svRecordVideoView(videoId,title);
  showVideoPlayer(title,url);
 }
 loadPublishedVideos();
