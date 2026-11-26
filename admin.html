@@ -6,7 +6,7 @@
 <p class="status" id="status">Loading Supabase connection…</p>
 <section id="auth"><h2>Admin sign in / sign up</h2><input id="email" type="email" placeholder="Email"><input id="password" type="password" placeholder="Password"><button id="login">Login</button><button class="secondary" id="signup">Create account</button><button class="secondary hidden" id="logout">Logout</button><p class="status" id="userInfo"></p></section>
 <section id="editor" class="hidden"><h2>Add or edit video</h2><input id="title" placeholder="Video title"><input id="category" placeholder="Category (Trending/New/Popular)"><input id="poster" placeholder="Poster image URL (or upload image below)"><label>Choose poster image<input id="posterFile" type="file" accept="image/*"></label><button type="button" class="secondary" id="uploadPoster">Upload poster image</button><input id="videoUrl" placeholder="Video URL (or upload video below)"><label>Choose video file<input id="videoFile" type="file" accept="video/mp4,video/webm,video/quicktime"></label><button type="button" class="secondary" id="uploadVideo">Upload video file (max 50 MB)</button><label><input id="published" type="checkbox" style="width:auto" checked> Published (show in Mini App)</label><button id="save">Save video</button><button class="secondary" id="clear">Clear form</button><input id="editId" type="hidden"></section>
-<section id="catalog" class="hidden"><h2>Database videos</h2><button class="secondary" id="adminLogout">Logout</button><div id="list"></div></section></main>
+<section id="catalog" class="hidden"><h2>Analytics</h2><div id="analyticsSummary" class="status">Loading live statistics…</div><button class="secondary" id="refreshAnalytics">Refresh analytics</button><h3>Currently online</h3><div id="onlineList" class="status">Loading…</div><h3>Video views</h3><div id="viewStats" class="status">Loading…</div><hr style="border-color:#30303b;margin:22px 0"><h2>Database videos</h2><button class="secondary" id="adminLogout">Logout</button><div id="list"></div></section></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL='https://bqienkfpdwhemomqnorx.supabase.co';
@@ -24,8 +24,46 @@ async function checkAdmin(){
  const {data,error}=await sb.from('admins').select('user_id').eq('user_id',user.id).maybeSingle();
  if(error){status('Database check error: '+error.message+' — run supabase-setup.sql in Supabase SQL Editor first.');return}
  if(!data){status('Login works, but this account is not an admin yet. Copy the UUID shown above and grant admin role in Supabase SQL.');return}
- currentAdmin=true;status('Admin access confirmed.');$('auth').classList.add('hidden');$('editor').classList.remove('hidden');$('catalog').classList.remove('hidden');await loadVideos()
+ currentAdmin=true;status('Admin access confirmed.');$('auth').classList.add('hidden');$('editor').classList.remove('hidden');$('catalog').classList.remove('hidden');await loadVideos();await loadAnalytics();if(window.analyticsTimer)clearInterval(window.analyticsTimer);window.analyticsTimer=setInterval(loadAnalytics,30000)
 }
+
+async function loadAnalytics(){
+ if(!currentAdmin)return;
+ $('analyticsSummary').textContent='Refreshing…';
+ const [presenceResult,viewsResult,videosResult]=await Promise.all([
+  sb.from('app_presence').select('user_key,display_name,username,platform,last_seen').gte('last_seen',new Date(Date.now()-120000).toISOString()).order('last_seen',{ascending:false}),
+  sb.from('video_views').select('video_id,video_title,viewed_at'),
+  sb.from('videos').select('id,title,category')
+ ]);
+ if(presenceResult.error||viewsResult.error||videosResult.error){
+  const err=presenceResult.error||viewsResult.error||videosResult.error;
+  $('analyticsSummary').textContent='Analytics setup required: '+err.message+' — Supabase SQL setup file run korte hobe.';
+  $('onlineList').textContent='';$('viewStats').textContent='';return;
+ }
+ const online=presenceResult.data||[],views=viewsResult.data||[],videos=videosResult.data||[];
+ const uniqueViewers=new Set(views.map(v=>v.viewer_key)).size;
+ $('analyticsSummary').textContent='Online now: '+online.length+' · Total video views: '+views.length+' · Unique viewers (all time): '+uniqueViewers;
+ $('onlineList').innerHTML='';
+ if(!online.length)$('onlineList').textContent='এখন কেউ Online নেই।';
+ online.forEach(u=>{
+  const row=document.createElement('div');row.className='video';
+  const meta=document.createElement('div');meta.className='meta';
+  const name=document.createElement('strong');name.textContent=u.display_name||'Unknown user';
+  const details=document.createElement('div');details.textContent=(u.username?'@'+u.username+' · ':'')+(u.platform||'')+' · Last active: '+new Date(u.last_seen).toLocaleTimeString();
+  meta.append(name,details);row.append(meta);$('onlineList').append(row);
+ });
+ const counts=new Map();views.forEach(v=>counts.set(v.video_id,(counts.get(v.video_id)||0)+1));
+ $('viewStats').innerHTML='';
+ if(!videos.length)$('viewStats').textContent='No videos found.';
+ videos.sort((a,b)=>(counts.get(b.id)||0)-(counts.get(a.id)||0)).forEach(v=>{
+  const row=document.createElement('div');row.className='video';
+  const meta=document.createElement('div');meta.className='meta';meta.textContent=v.title+' · '+v.category;
+  const count=document.createElement('strong');count.textContent=(counts.get(v.id)||0)+' views';
+  row.append(meta,count);$('viewStats').append(row);
+ });
+}
+$('refreshAnalytics').onclick=loadAnalytics;
+
 async function loadVideos(){
  const {data,error}=await sb.from('videos').select('*').order('created_at',{ascending:false});
  if(error){$('list').textContent=error.message;return}
