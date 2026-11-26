@@ -83,3 +83,40 @@ drop policy if exists "SPICY admins delete media" on storage.objects;
 create policy "SPICY admins delete media"
 on storage.objects for delete to authenticated
 using (bucket_id = 'vault-videos' and public.is_spicy_admin());
+
+ 
+-- SPICY VAULT live presence and video-view analytics
+create table if not exists public.app_presence (
+  user_key text primary key,
+  display_name text not null default 'Member',
+  username text,
+  platform text not null default 'Web',
+  last_seen timestamptz not null default now()
+);
+create index if not exists app_presence_last_seen_idx on public.app_presence(last_seen desc);
+alter table public.app_presence enable row level security;
+drop policy if exists "Public can update own presence heartbeat" on public.app_presence;
+drop policy if exists "Public can insert presence heartbeat" on public.app_presence;
+drop policy if exists "Admins can read presence" on public.app_presence;
+create policy "Public can insert presence heartbeat" on public.app_presence for insert to anon, authenticated with check (true);
+create policy "Public can update own presence heartbeat" on public.app_presence for update to anon, authenticated using (true) with check (true);
+create policy "Admins can read presence" on public.app_presence for select to authenticated using (public.is_spicy_admin());
+grant insert, update on public.app_presence to anon, authenticated;
+grant select on public.app_presence to authenticated;
+
+create table if not exists public.video_views (
+  id uuid primary key default gen_random_uuid(),
+  video_id uuid references public.videos(id) on delete set null,
+  viewer_key text not null,
+  video_title text not null default 'Video',
+  viewed_at timestamptz not null default now()
+);
+create index if not exists video_views_video_id_idx on public.video_views(video_id);
+create index if not exists video_views_viewed_at_idx on public.video_views(viewed_at desc);
+alter table public.video_views enable row level security;
+drop policy if exists "Public can record video views" on public.video_views;
+drop policy if exists "Admins can read video views" on public.video_views;
+create policy "Public can record video views" on public.video_views for insert to anon, authenticated with check (true);
+create policy "Admins can read video views" on public.video_views for select to authenticated using (public.is_spicy_admin());
+grant insert on public.video_views to anon, authenticated;
+grant select on public.video_views to authenticated;
