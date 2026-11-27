@@ -224,15 +224,52 @@ async function loadPublishedVideos(){
   msg.style.display='block';msg.textContent='Videos load hocche na: '+(err.message||String(err))+' — refresh/reload try koro.';
  }
 }
+function svProgressStorageKey(videoId){return 'svAdProgress:'+svViewerKey+':'+videoId}
+function svGetAdProgress(videoId){try{return Math.min(SV_ADS_REQUIRED,Math.max(0,Number(localStorage.getItem(svProgressStorageKey(videoId))||0)))}catch(e){return 0}}
+function svSetAdProgress(videoId,n){try{localStorage.setItem(svProgressStorageKey(videoId),String(n))}catch(e){}}
+function lockedVideo(title,url,videoId){
+ openModal(title,'');
+ const body=document.getElementById('modalBody');
+ const intro=document.createElement('p');intro.textContent='Watch 2 ads to unlock this video for 5 hours.';body.append(intro);
+ const counter=document.createElement('p');counter.style.cssText='font-size:18px;font-weight:800;text-align:center;color:#fff';body.append(counter);
+ const timer=document.createElement('p');timer.style.cssText='text-align:center;font-size:16px;font-weight:700';timer.textContent='Ad time: 00:00';body.append(timer);
+ const status=document.createElement('p');status.style.cssText='text-align:center;color:#aaa';body.append(status);
+ const button=document.createElement('button');button.className='action-btn';button.style.background='var(--red)';button.style.borderColor='var(--red)';body.append(button);
+ let completed=svGetAdProgress(videoId),clock=null,busy=false;
+ const update=()=>{counter.textContent='Ads completed: '+completed+' / '+SV_ADS_REQUIRED;button.textContent='▶ Watch Ad '+(completed+1)+' of '+SV_ADS_REQUIRED;status.textContent='Watch '+(SV_ADS_REQUIRED-completed)+' more ad(s) to unlock.'};
+ update();timer.textContent='Ad time: 00:00';
+ button.onclick=async()=>{
+  if(busy)return;
+  if(typeof window.svShowTmaAd!=='function'){status.textContent='Ad system is not ready. Please try again shortly.';return}
+  busy=true;button.disabled=true;status.textContent='Ad is running…';
+  const started=Date.now();clock=setInterval(()=>{timer.textContent='Ad time: '+svFormatTime((Date.now()-started)/1000)},250);
+  try{
+   await window.svShowTmaAd();
+   if(clock){clearInterval(clock);clock=null}
+   timer.textContent='Ad time: '+svFormatTime((Date.now()-started)/1000);
+   completed=Math.min(SV_ADS_REQUIRED,completed+1);svSetAdProgress(videoId,completed);
+   counter.textContent='Ads completed: '+completed+' / '+SV_ADS_REQUIRED;
+   if(completed<SV_ADS_REQUIRED){status.textContent='Ad completed! One more ad needed.';button.disabled=false;button.textContent='▶ Watch Ad 2 of 2';busy=false;return}
+   svSaveUnlock(videoId);try{localStorage.removeItem(svProgressStorageKey(videoId))}catch(e){}
+   status.textContent='REWARD GRANTED';counter.textContent='REWARD GRANTED 🎉';button.textContent='Unlocked for 5 hours';button.disabled=true;
+   setTimeout(()=>{hideModal();svRecordVideoView(videoId,title);showVideoPlayer(title,url,'REWARD GRANTED · Unlocked for 5 hours')},1100);
+  }catch(err){
+   if(clock){clearInterval(clock);clock=null}
+   console.warn('OnClickA rewarded ad failed',err);status.textContent='Ad did not complete. No reward granted. Please retry.';
+   button.disabled=false;busy=false;button.textContent='▶ Retry Ad '+(completed+1)+' of '+SV_ADS_REQUIRED;
+  }
+ };
+}
 function playRemoteVideo(title,url,videoId){
- if(!url){lockedVideo(title,url,videoId);return}
- if(!svIsVideoUnlocked(videoId)){lockedVideo(title,url// Initialize OnClickA TMA Rewarded Video spot used by the per-video unlock flow.
+ if(!url){openModal(title,'<p>Video link is not available yet.</p>');return}
+ if(!svIsVideoUnlocked(videoId)){lockedVideo(title,url,videoId);return}
+ svRecordVideoView(videoId,title);
+ const remaining=Math.max(0,Math.floor((svUnlockExpiry(videoId)-Date.now())/1000));
+ showVideoPlayer(title,url,'Unlocked · '+svFormatTime(remaining)+' remaining');
+}
+// Initialize OnClickA TMA rewarded spot; the ad is requested only when the user taps Watch Ad.
 window.svShowTmaAd=null;
 window.initCdTma?.({id:6156045}).then(show=>{window.svShowTmaAd=show;}).catch(err=>console.warn('OnClickA TMA init failed',err));
-console.warn('OnClickA TMA ad display failed',err);svAdStatus.textContent='Ad did not play. Please try again.';})
-   .finally(()=>{svAdButton.disabled=false;svAdButton.textContent='▶  Watch Ad';});
- });
-}
 loadPublishedVideos();
 
 </script>
