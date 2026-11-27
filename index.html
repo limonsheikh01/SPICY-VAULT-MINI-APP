@@ -94,40 +94,51 @@ function openModal(title,body){document.getElementById('modalTitle').textContent
 function hideModal(){document.getElementById('overlay').style.display='none';const wrap=document.querySelector('#modalBody .player-wrap');if(wrap)wrap.classList.remove('fake-fullscreen');const v=document.querySelector('#modalBody video');if(v)v.pause();try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock()}catch(e){}}
 function closeModal(e){if(e.target.id==='overlay')hideModal()}
 const SV_ADS_REQUIRED=2, SV_UNLOCK_MS=5*60*60*1000;
-function svUnlockStorageKey(videoId){return 'svUnlock:'+svViewerKey+':'+videoId}
-function svUnlockExpiry(videoId){try{return Number(localStorage.getItem(svUnlockStorageKey(videoId))||0)}catch(e){return 0}}
-function svIsVideoUnlocked(videoId){return svUnlockExpiry(videoId)>Date.now()}
-function svSaveUnlock(videoId){const expiry=Date.now()+SV_UNLOCK_MS;try{localStorage.setItem(svUnlockStorageKey(videoId),String(expiry))}catch(e){}return expiry}
-function svFormatTime(seconds){const s=Math.max(0,Math.floor(seconds));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
-function svAdProgressKey(videoId){return 'svAdProgress:'+svViewerKey+':'+videoId}
-function svGetAdProgress(videoId){try{return Math.min(SV_ADS_REQUIRED,Math.max(0,Number(localStorage.getItem(svAdProgressKey(videoId))||0)))}catch(e){return 0}}
-function svSetAdProgress(videoId,value){try{localStorage.setItem(svAdProgressKey(videoId),String(value))}catch(e){}}
-function lockedVideo(title,url,videoId){
+const SV_REWARD_ENDPOINT=SV_SUPABASE_URL+'/functions/v1/onclicka-reward';
+async function svRewardRequest(action,videoId){
+ const initData=tgApp?.initData||'';
+ if(!initData)throw new Error('Open SPICY VAULT from Telegram to unlock videos.');
+ const response=await fetch(SV_REWARD_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,videoId,initData})});
+ const result=await response.json().catch(()=>({}));
+ if(!response.ok)throw new Error(result.error||'Reward server is unavailable.');
+ return result;
+}
+async function lockedVideo(title,url,videoId){
  openModal(title,'');
  const body=document.getElementById('modalBody');
  const intro=document.createElement('p');intro.textContent='Watch 2 ads to unlock this video.';body.append(intro);
- const counter=document.createElement('p');counter.style.cssText='font-size:18px;font-weight:800;text-align:center;color:#fff';body.append(counter);
- const status=document.createElement('p');status.style.cssText='text-align:center;color:#aaa';body.append(status);
- const button=document.createElement('button');button.className='action-btn';button.style.background='var(--red)';button.style.borderColor='var(--red)';body.append(button);
- let completed=svGetAdProgress(videoId),busy=false;
- const refresh=()=>{counter.textContent='Ads completed: '+completed+' / '+SV_ADS_REQUIRED;button.textContent='▶ Watch Ad '+(completed+1)+' of 2';status.textContent='Watch '+(SV_ADS_REQUIRED-completed)+' more ad(s) to unlock.'};
- refresh();
+ const counter=document.createElement('p');counter.style.cssText='font-size:18px;font-weight:800;text-align:center;color:#fff';counter.textContent='Checking reward progress…';body.append(counter);
+ const status=document.createElement('p');status.style.cssText='text-align:center;color:#aaa';status.textContent='Please wait…';body.append(status);
+ const button=document.createElement('button');button.className='action-btn';button.style.background='var(--red)';button.style.borderColor='var(--red)';button.disabled=true;button.textContent='Loading…';body.append(button);
+ let completed=0,busy=false;
+ const refresh=()=>{counter.textContent='Ads completed: '+completed+' / '+SV_ADS_REQUIRED;button.textContent='▶ Watch Ad '+(completed+1)+' of 2';button.disabled=false;status.textContent='Watch '+(SV_ADS_REQUIRED-completed)+' more ad(s) to unlock.'};
+ try{const state=await svRewardRequest('status',videoId);if(state.unlockedUntil>Date.now()){hideModal();showVideoPlayer(title,url,'Unlocked for 5 hours.');return}completed=Number(state.completedAds)||0;refresh()}catch(err){status.textContent=err.message;button.textContent='Reward system unavailable';return}
  button.onclick=async()=>{
   if(busy)return;
   if(typeof window.svShowTmaAd!=='function'){status.textContent='Ad system not ready. Please try again shortly.';return}
-  busy=true;button.disabled=true;status.textContent='Ad is running…';
+  busy=true;button.disabled=true;status.textContent='Waiting for ad…';
   try{
    await window.svShowTmaAd();
-   completed=Math.min(SV_ADS_REQUIRED,completed+1);svSetAdProgress(videoId,completed);
+   status.textContent='Verifying ad view with OnClicka…';
+   let confirmation=null;
+   for(let attempt=0;attempt<20;attempt++){
+    confirmation=await svRewardRequest('claim',videoId);
+    if(confirmation.confirmed)break;
+    await new Promise(resolve=>setTimeout(resolve,1000));
+   }
+   if(!confirmation?.confirmed){throw new Error('OnClicka has not confirmed this ad view yet. No reward was added. Please try again later.')}
+   completed=Number(confirmation.completedAds)||0;
+   if(confirmation.unlockedUntil>Date.now()){
+    counter.textContent='REWARD GRANTED 🎉';status.textContent='Video unlocked for 5 hours.';button.textContent='Unlocked';button.disabled=true;
+    setTimeout(()=>{hideModal();svRecordVideoView(videoId,title);showVideoPlayer(title,url,'Unlocked for 5 hours.')},1000);return;
+   }
    counter.textContent='Ads completed: '+completed+' / '+SV_ADS_REQUIRED;
-   if(completed<SV_ADS_REQUIRED){status.textContent='Ad completed! One more ad needed.';button.disabled=false;button.textContent='▶ Watch Ad 2 of 2';busy=false;return}
-   svSaveUnlock(videoId);try{localStorage.removeItem(svAdProgressKey(videoId))}catch(e){}
-   status.textContent='REWARD GRANTED';counter.textContent='REWARD GRANTED 🎉';button.textContent='Unlocked for 5 hours';
-   setTimeout(()=>{hideModal();svRecordVideoView(videoId,title);showVideoPlayer(title,url,'Unlocked for 5 hours.')},1000);
+   status.textContent='Ad view confirmed! One more ad needed.';
+   button.textContent='▶ Watch Ad 2 of 2';button.disabled=false;busy=false;
   }catch(err){
-   console.warn('OnClickA ad failed or no ad available',err);
-   status.textContent='Ad did not load or complete. No reward granted.';
-   button.disabled=false;busy=false;button.textContent='▶ Retry Ad '+(completed+1)+' of 2';
+   console.warn('OnClicka reward verification failed',err);
+   status.textContent=err.message||'Ad could not be verified. No reward granted.';
+   button.disabled=false;button.textContent='▶ Retry Ad '+(completed+1)+' of 2';busy=false;
   }
  };
 }
@@ -258,12 +269,15 @@ function lockedVideo(title,url,videoId){
   }
  };
 }
-function playRemoteVideo(title,url,videoId){
+async function playRemoteVideo(title,url,videoId){
  if(!url){openModal(title,'<p>Video link is not available yet.</p>');return}
- if(!svIsVideoUnlocked(videoId)){lockedVideo(title,url,videoId);return}
- svRecordVideoView(videoId,title);
- const remaining=Math.max(0,Math.floor((svUnlockExpiry(videoId)-Date.now())/1000));
- showVideoPlayer(title,url,'Unlocked · '+svFormatTime(remaining)+' remaining');
+ try{
+  const state=await svRewardRequest('status',videoId);
+  if(!(state.unlockedUntil>Date.now())){lockedVideo(title,url,videoId);return}
+  svRecordVideoView(videoId,title);
+  const remaining=Math.max(0,Math.floor((state.unlockedUntil-Date.now())/1000));
+  showVideoPlayer(title,url,'Unlocked · '+svFormatTime(remaining)+' remaining');
+ }catch(err){openModal(title,'');const p=document.createElement('p');p.textContent=err.message||'Could not verify video access.';document.getElementById('modalBody').append(p)}
 }
 // Initialize OnClickA TMA rewarded spot; the ad is requested only when the user taps Watch Ad.
 window.svShowTmaAd=null;
