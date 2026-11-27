@@ -1,4 +1,4 @@
-name: Deploy OnClicka Reward Function
+name: Deploy Onclicka Reward Function
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ jobs:
         shell: bash
         run: |
           if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
-            echo "::error::GitHub Actions did not receive SUPABASE_ACCESS_TOKEN. Re-save it under Repository secrets (not Environment secrets) with the exact name SUPABASE_ACCESS_TOKEN."
+            echo "::error::GitHub Actions did not receive SUPABASE_ACCESS_TOKEN. Re-save it under Repository secrets with the exact name SUPABASE_ACCESS_TOKEN."
             exit 1
           fi
           echo "Supabase access token is available (value hidden)."
@@ -35,4 +35,4 @@ jobs:
           version: latest
 
       - name: Deploy Edge Function
-        run: supabase functions deploy onclicka-reward --project-ref bqienkfpdwhemomqnorx
+        run: supabase functions deploy onclicka-reward --project-ref bqienkfpdwhemomqnorx --yes
