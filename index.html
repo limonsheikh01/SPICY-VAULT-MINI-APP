@@ -107,23 +107,17 @@ function lockedVideo(title,url,videoId){
  const body=document.getElementById('modalBody');
  const intro=document.createElement('p');intro.textContent='Watch 2 ads to unlock this video.';body.append(intro);
  const counter=document.createElement('p');counter.style.cssText='font-size:18px;font-weight:800;text-align:center;color:#fff';body.append(counter);
- const timer=document.createElement('p');timer.style.cssText='text-align:center;font-size:16px;font-weight:700;display:none';timer.textContent='Ad time: 00:00';body.append(timer);
  const status=document.createElement('p');status.style.cssText='text-align:center;color:#aaa';body.append(status);
  const button=document.createElement('button');button.className='action-btn';button.style.background='var(--red)';button.style.borderColor='var(--red)';body.append(button);
- let completed=svGetAdProgress(videoId),clock=null,busy=false;
+ let completed=svGetAdProgress(videoId),busy=false;
  const refresh=()=>{counter.textContent='Ads completed: '+completed+' / '+SV_ADS_REQUIRED;button.textContent='▶ Watch Ad '+(completed+1)+' of 2';status.textContent='Watch '+(SV_ADS_REQUIRED-completed)+' more ad(s) to unlock.'};
  refresh();
  button.onclick=async()=>{
   if(busy)return;
   if(typeof window.svShowTmaAd!=='function'){status.textContent='Ad system not ready. Please try again shortly.';return}
-  busy=true;button.disabled=true;status.textContent='Ad is running…';timer.style.display='block';
-  const start=Date.now();timer.textContent='Ad time: 00:00';clock=setInterval(()=>{timer.textContent='Ad time: '+svFormatTime((Date.now()-start)/1000)},250);
+  busy=true;button.disabled=true;status.textContent='Ad is running…';
   try{
    await window.svShowTmaAd();
-   const elapsed=(Date.now()-start)/1000;
-   if(clock){clearInterval(clock);clock=null}
-   timer.style.display='none';
-   if(elapsed<15){status.textContent='No completed ad was confirmed. Please try again.';button.disabled=false;busy=false;return}
    completed=Math.min(SV_ADS_REQUIRED,completed+1);svSetAdProgress(videoId,completed);
    counter.textContent='Ads completed: '+completed+' / '+SV_ADS_REQUIRED;
    if(completed<SV_ADS_REQUIRED){status.textContent='Ad completed! One more ad needed.';button.disabled=false;button.textContent='▶ Watch Ad 2 of 2';busy=false;return}
@@ -131,8 +125,7 @@ function lockedVideo(title,url,videoId){
    status.textContent='REWARD GRANTED';counter.textContent='REWARD GRANTED 🎉';button.textContent='Unlocked for 5 hours';
    setTimeout(()=>{hideModal();svRecordVideoView(videoId,title);showVideoPlayer(title,url,'Unlocked for 5 hours.')},1000);
   }catch(err){
-   if(clock){clearInterval(clock);clock=null}
-   timer.style.display='none';console.warn('OnClickA ad failed or no ad available',err);
+   console.warn('OnClickA ad failed or no ad available',err);
    status.textContent='Ad did not load or complete. No reward granted.';
    button.disabled=false;busy=false;button.textContent='▶ Retry Ad '+(completed+1)+' of 2';
   }
