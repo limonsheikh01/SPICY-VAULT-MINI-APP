@@ -225,24 +225,11 @@ async function loadPublishedVideos(){
  }
 }
 function playRemoteVideo(title,url,videoId){
- if(!url){lockedVideo(title);return}
- svRecordVideoView(videoId,title);
- showVideoPlayer(title,url);
-}
-// OnClickA TMA video test spot
+ if(!url){lockedVideo(title,url,videoId);return}
+ if(!svIsVideoUnlocked(videoId)){lockedVideo(title,url// Initialize OnClickA TMA Rewarded Video spot used by the per-video unlock flow.
 window.svShowTmaAd=null;
-const svAdButton=document.getElementById('profileWatchAd');
-const svAdStatus=document.getElementById('profileAdStatus');
-if(svAdButton){
- window.initCdTma?.({id:6156045})
-  .then(show=>{window.svShowTmaAd=show;svAdButton.disabled=false;svAdButton.textContent='▶  Watch Ad';svAdStatus.textContent='Ready to test';})
-  .catch(err=>{console.warn('OnClickA TMA ad initialization failed',err);svAdButton.disabled=true;svAdButton.textContent='Ad unavailable';svAdStatus.textContent='Ad could not initialize. Try again later.';});
- svAdButton.addEventListener('click',()=>{
-  if(typeof window.svShowTmaAd!=='function'){svAdStatus.textContent='Ad is not ready yet.';return}
-  svAdButton.disabled=true;svAdButton.textContent='Opening ad…';svAdStatus.textContent='Please wait…';
-  Promise.resolve(window.svShowTmaAd())
-   .then(()=>{svAdStatus.textContent='Ad display completed.';})
-   .catch(err=>{console.warn('OnClickA TMA ad display failed',err);svAdStatus.textContent='Ad did not play. Please try again.';})
+window.initCdTma?.({id:6156045}).then(show=>{window.svShowTmaAd=show;}).catch(err=>console.warn('OnClickA TMA init failed',err));
+console.warn('OnClickA TMA ad display failed',err);svAdStatus.textContent='Ad did not play. Please try again.';})
    .finally(()=>{svAdButton.disabled=false;svAdButton.textContent='▶  Watch Ad';});
  });
 }
