@@ -102,20 +102,20 @@ function svFormatTime(seconds){const s=Math.max(0,Math.floor(seconds));return St
 function lockedVideo(title,url,videoId){
  openModal(title,'');
  const body=document.getElementById('modalBody');
- const intro=document.createElement('p');intro.textContent='Watch 2 ads to unlock this video for 5 hours.';body.append(intro);
+ const intro=document.createElement('p');intro.textContent='Watch 2 ads to unlock this video.';body.append(intro);
  const counter=document.createElement('p');counter.style.cssText='font-size:18px;font-weight:800;text-align:center;color:#fff';counter.textContent='Ads completed: 0 / 2';body.append(counter);
- const timer=document.createElement('p');timer.style.cssText='text-align:center;font-size:16px;font-weight:700';timer.textContent='Ad time: 00:00';body.append(timer);
+ const timer=document.createElement('p');timer.style.cssText='text-align:center;font-size:16px;font-weight:700;display:none';timer.textContent='Ad time: 00:00';body.append(timer);
  const status=document.createElement('p');status.style.cssText='text-align:center;color:#aaa';status.textContent='Press the button to watch ad 1.';body.append(status);
  const button=document.createElement('button');button.className='action-btn';button.style.background='var(--red)';button.style.borderColor='var(--red)';button.textContent='▶ Watch Ad 1 of 2';body.append(button);
  let completed=0,clock=null,busy=false;
  button.onclick=async()=>{
   if(busy)return;
   if(typeof window.svShowTmaAd!=='function'){status.textContent='Ad system not ready. Please try again shortly.';return}
-  busy=true;button.disabled=true;status.textContent='Ad is running…';
-  const start=Date.now();clock=setInterval(()=>{timer.textContent='Ad time: '+svFormatTime((Date.now()-start)/1000)},250);
+  busy=true;button.disabled=true;status.textContent='Ad is running…';timer.style.display='block';
+  const start=Date.now();timer.textContent='Ad time: 00:00';clock=setInterval(()=>{timer.textContent='Ad time: '+svFormatTime((Date.now()-start)/1000)},250);
   try{
    await window.svShowTmaAd();
-   clearInterval(clock);clock=null;
+   clearInterval(clock);clock=null;timer.style.display='none';
    completed++;counter.textContent='Ads completed: '+completed+' / '+SV_ADS_REQUIRED;
    if(completed<SV_ADS_REQUIRED){status.textContent='Ad '+completed+' completed. Next ad is ready.';button.disabled=false;button.textContent='▶ Watch Ad '+(completed+1)+' of 2';busy=false;return}
    svSaveUnlock(videoId);button.remove();status.textContent='REWARD GRANTED! Video unlocked for 5 hours.';counter.textContent='REWARD GRANTED';
