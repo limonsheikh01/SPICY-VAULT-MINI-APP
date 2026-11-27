@@ -120,3 +120,27 @@ create policy "Public can record video views" on public.video_views for insert t
 create policy "Admins can read video views" on public.video_views for select to authenticated using (public.is_spicy_admin());
 grant insert on public.video_views to anon, authenticated;
 grant select on public.video_views to authenticated;
+
+
+-- Server-verified OnClickA rewarded-ad confirmations and per-video unlocks.
+-- These tables have no public policies; only the Edge Function service role can access them.
+create table if not exists public.onclicka_confirmed_views (
+  id uuid primary key default gen_random_uuid(),
+  telegram_user_id text not null,
+  received_at timestamptz not null default now(),
+  claimed_at timestamptz
+);
+create index if not exists onclicka_confirmed_views_pending_idx
+  on public.onclicka_confirmed_views(telegram_user_id, received_at)
+  where claimed_at is null;
+alter table public.onclicka_confirmed_views enable row level security;
+
+create table if not exists public.sv_reward_unlocks (
+  telegram_user_id text not null,
+  video_id uuid not null references public.videos(id) on delete cascade,
+  completed_ads integer not null default 0 check (completed_ads between 0 and 1),
+  unlocked_until timestamptz,
+  updated_at timestamptz not null default now(),
+  primary key (telegram_user_id, video_id)
+);
+alter table public.sv_reward_unlocks enable row level security;
