@@ -233,7 +233,7 @@ function svSetAdProgress(videoId,n){try{localStorage.setItem(svProgressStorageKe
 function lockedVideo(title,url,videoId){
  openModal(title,'');
  const body=document.getElementById('modalBody');
- const intro=document.createElement('p');intro.textContent='Watch 2 ads to unlock this video for 5 hours.';body.append(intro);
+ const intro=document.createElement('p');intro.textContent='Watch 2 ads to unlock this video.';body.append(intro);
  const counter=document.createElement('p');counter.style.cssText='font-size:18px;font-weight:800;text-align:center;color:#fff';body.append(counter);
  const status=document.createElement('p');status.style.cssText='text-align:center;color:#aaa';body.append(status);
  const button=document.createElement('button');button.className='action-btn';button.style.background='var(--red)';button.style.borderColor='var(--red)';body.append(button);
